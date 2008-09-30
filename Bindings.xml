@@ -1,0 +1,8 @@
+<Bindings>
+	<Binding name="STABLEBOY_MOUNT_BEST" header="STABLEBOY">
+		StableBoy:ClickHandler()
+	</Binding>
+	<Binding name="STABLEBOY_MOUNT_GROUND">
+		StableBoy:ClickHandler(true)
+	</Binding>
+</Bindings>

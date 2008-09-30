@@ -1,0 +1,10 @@
+## Title: Stable Boy
+## Notes: Manages your mounts.
+## Author: NightHawk The Sane
+## X-eMail: nighthawkthesane@gmail.com
+## Interface: 30000
+## Version: 1.0
+
+StableBoy.lua
+Bindings.xml
+
