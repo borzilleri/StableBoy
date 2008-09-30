@@ -6,7 +6,6 @@ local SPEED_FAST = 3
 local CONDITION_MOUNTED = '[mounted]'
 local CONDITION_MOUNTABLE = '[outdoors]'
 local CONDITION_FLYABLE = '[flyable]'
---local mounts = STABLEBOY_MOUNTS
 BINDING_HEADER_STABLEBOY = 'StableBoy'
 BINDING_NAME_STABLEBOY_MOUNT_BEST = 'Summon Best Mount'
 BINDING_NAME_STABLEBOY_MOUNT_GROUND = 'Summon Ground Mount'
@@ -35,6 +34,10 @@ function StableBoy:ADDON_LOADED(addon,...)
 		self.frame = CreateFrame("Button", "StableBoyFrame", UIParent)
 		self.frame:Hide()
 		self.frame:SetScript("OnClick", function(...) StableBoy:ClickHandler() end)
+		
+		-- Setup LDB plugin
+		self.ldb = LibStub:GetLibrary("LibDataBroker-1.1"):NewDataObject("StableBoy", {text="StableBoy"})
+		self.ldb.icon = "Interface\\Icons\\Spell_Holy_CrusaderAura"
 	end
 end
 
@@ -59,33 +62,32 @@ function StableBoy:ParseMounts()
 	local maxFlyingSpeed = SPEED_SLOW
 	for i=1,maxMounts do
 		local thisMount = { mountType=MOUNT_GROUND, speed=SPEED_SLOW}
-		local flying, extremely, very, fast
 		local creatureID,name,spellID = GetCompanionInfo('MOUNT',i)
-		
+
 		StableBoyTooltip:SetHyperlink("spell:"..spellID)
-		
 		local numLines = StableBoyTooltip:NumLines()
+		local text = ""
 		for j=1,numLines do
-			local text = _G["StableBoyTooltipTextLeft"..j]:GetText()
-			for word in string.gmatch(text, "%a+") do
-				if( word == "Outland" or word == "Northrend" ) then
-					thisMount.mountType = MOUNT_FLYING
-				elseif( word == "extremely" ) then
-					extremely = true
-				elseif( word == "very" ) then
-					very = true
-				elseif( word == "fast" ) then
-					fast = true
-				end
-			end -- word in string.gmatch
-		end -- j=1,numLines
-		
-		if( extremely and fast ) then
-			thisMount.speed=SPEED_FAST
-		elseif( very and fast ) then
-			thisMount.speed=SPEED_MEDIUM
+			text = string.format("%s %s", text, _G["StableBoyTooltipTextLeft"..j]:GetText())
+		end
+
+		-- Determine if we're a flying mount.
+		-- Flying mounts can only be used in Outland or Northrend,
+		-- And say so on the tooltip.
+		if text:match("Outland") or text:match("Northrend") then
+			thisMount.mountType = MOUNT_FLYING
+		end
+
+		-- Figure out how fast this mount is.
+		if text:match("extremely%s+fast") then
+			-- "extremely fast" means it's a 310% Flying mount.
+			thisMount.speed = SPEED_FAST
+		elseif text:match("very%s+fast") then
+			-- "very fast" means it's a 100% speed ground mount, or a 280% speed flying mount.
+			thisMount.speed = SPEED_MEDIUM
 		end
 		
+		-- Update our max speed values if this is the fastest mount we've seen yet
 		if( thisMount.mountType == MOUNT_GROUND and thisMount.speed > maxGroundSpeed ) then
 			maxGroundSpeed = thisMount.speed
 		elseif( thisMount.mountType == MOUNT_FLYING and thisMount.speed > maxFlyingSpeed ) then
@@ -95,7 +97,7 @@ function StableBoy:ParseMounts()
 		myMounts[i] = thisMount
 	end -- i=1,maxMounts
 	StableBoyTooltip:Hide()
-	
+		
 	for i,thisMount in pairs(myMounts) do
 		if( thisMount.mountType == MOUNT_GROUND and thisMount.speed >= maxGroundSpeed ) then
 			self.myGroundMounts[#self.myGroundMounts+1] = i
