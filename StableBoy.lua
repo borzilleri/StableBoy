@@ -17,7 +17,7 @@ local function announce(msg)
 	DEFAULT_CHAT_FRAME:AddMessage("StableBoy: "..msg)
 end
 
-StableBoy = CreateFrame("frame", "StableBoy", UIParent)
+StableBoy = CreateFrame("frame", "StableBoyFrame", UIParent)
 StableBoy:SetScript("OnEvent", function(self, event, ...) return self[event](self, ...) end)
 StableBoy:RegisterEvent("ADDON_LOADED")
 StableBoy.myGroundMounts = {}
@@ -31,13 +31,19 @@ function StableBoy:ADDON_LOADED(addon,...)
 		self:RegisterEvent('COMPANION_LEARNED')
 		
 		-- Set Scripts
-		self.frame = CreateFrame("Button", "StableBoyFrame", UIParent)
+		self.frame = CreateFrame("Button", "StableBoyClickFrame", UIParent)
 		self.frame:Hide()
 		self.frame:SetScript("OnClick", function(...) StableBoy:ClickHandler() end)
 		
 		-- Setup LDB plugin
-		self.ldb = LibStub:GetLibrary("LibDataBroker-1.1"):NewDataObject("StableBoy", {text="StableBoy"})
+		self.ldb = LibStub:GetLibrary("LibDataBroker-1.1"):NewDataObject("StableBoyLDB", {text="StableBoy"})
 		self.ldb.icon = "Interface\\Icons\\Spell_Holy_CrusaderAura"
+		self.ldb.OnClick = function(...) StableBoy:LDB_OnClick(...) end
+		
+		-- Setup Menu
+		self.menu = CreateFrame("Frame", "StableBoyDropDownMenu", UIParent, "UIDropDownMenuTemplate")
+--		StableBoyDropDownMenu:SetPoint("CENTER", UIParent)
+		UIDropDownMenu_Initialize(self.menu, StableBoy_InitializeMenu, "MENU")
 	end
 end
 
@@ -188,6 +194,8 @@ function StableBoy:IsFlyableArea()
 end
 
 
+-- Deprecated
+--
 -- Hack of a function until they fix the [flyable] conditional in Northrend
 -- Returns TRUE if the player is NOT in northrend, OR if the player knows Cold Weather Flying.
 -- Returns false if the player IS in northrend AND does not know Cold Weather Flying
@@ -202,5 +210,42 @@ function StableBoy:NorthrendFlyable()
 		return true
 	else
 		return false
+	end
+end
+
+function StableBoy:LDB_OnClick(frame,button,down)
+	if( button == "LeftButton" ) then
+		local forceGround = false
+		if( IsShiftKeyDown() ) then forceGround = true; end
+		StableBoy:ClickHandler(forceGround)
+	elseif( button == "RightButton" ) then
+		ToggleDropDownMenu(1, nil, StableBoyDropDownMenu, frame, 0, 0);
+	end
+end
+
+local options = {
+	a = {
+		text = "First Item",
+		value = 1,
+		func = function() announce("first"); end,
+		owner = nil,
+	},
+	b = {
+		text = "Second Item",
+		value = 1,
+		func = function() announce("second"); end,
+		owner = nil,
+	}
+}
+
+function StableBoy_InitializeMenu()
+	level = level or 1 --drop down menus can have sub menus. The value of "level" determines the drop down sub menu tier.
+	
+	Spew('self',self)
+	--announce(this:GetName())
+	--announce(this:GetParent():GetName())
+	for k,v in pairs(options) do
+		v.owner = this:GetParent()
+		UIDropDownMenu_AddButton(v,level)
 	end
 end
