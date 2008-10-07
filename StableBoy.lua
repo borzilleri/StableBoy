@@ -23,6 +23,24 @@ StableBoy:RegisterEvent("ADDON_LOADED")
 StableBoy.myGroundMounts = {}
 StableBoy.myFlyingMounts = {}
 
+local menu = {
+	["Flying"] = {
+		text = "Flying Mounts",
+		value = { ["Level1_Key"] = "Flying" },
+		notCheckable = true,
+		hasArrow = true,
+		submenu = {}
+	},
+	["Ground"] = {
+		text = "Ground Mounts",
+		value = { ["Level1_Key"] = "Ground" },
+		notCheckable = true,
+		hasArrow = true,
+		submenu = {}
+	}
+}
+
+
 -- I could probably separate the various parts of this method into sub-methods
 function StableBoy:ADDON_LOADED(addon,...)
 	if( addon == 'StableBoy' ) then
@@ -36,7 +54,7 @@ function StableBoy:ADDON_LOADED(addon,...)
 		self.frame:SetScript("OnClick", function(...) StableBoy:ClickHandler() end)
 		
 		-- Setup LDB plugin
-		self.ldb = LibStub:GetLibrary("LibDataBroker-1.1"):NewDataObject("StableBoyLDB", {text="StableBoy"})
+		self.ldb = LibStub:GetLibrary("LibDataBroker-1.1"):NewDataObject("StableBoyLDB", {label="StableBoy",text=""})
 		self.ldb.icon = "Interface\\Icons\\Spell_Holy_CrusaderAura"
 		self.ldb.OnClick = function(...) StableBoy:LDB_OnClick(...) end
 		
@@ -100,6 +118,13 @@ function StableBoy:ParseMounts()
 			maxFlyingSpeed = thisMount.speed
 		end
 		
+		-- Add this mount to our menu
+		if( thisMount.mountType == MOUNT_FLYING ) then
+			menu["Flying"].submenu[i] = { text=name, value=i }
+		elseif( thisMount.mountType == MOUNT_GROUND ) then
+			menu["Ground"].submenu[i] = { text=name, value=i }
+		end
+		
 		myMounts[i] = thisMount
 	end -- i=1,maxMounts
 	StableBoyTooltip:Hide()
@@ -112,6 +137,7 @@ function StableBoy:ParseMounts()
 		end
 	end -- i,thisMount in myMounts
 end
+
 
 -- Deprecated
 function StableBoy:InitializeMounts()
@@ -223,29 +249,30 @@ function StableBoy:LDB_OnClick(frame,button,down)
 	end
 end
 
-local options = {
-	a = {
-		text = "First Item",
-		value = 1,
-		func = function() announce("first"); end,
-		owner = nil,
-	},
-	b = {
-		text = "Second Item",
-		value = 1,
-		func = function() announce("second"); end,
-		owner = nil,
-	}
-}
+function StableBoy:Menu_OnClick()
+	CallCompanion("MOUNT",this.value)
+end
 
-function StableBoy_InitializeMenu()
-	level = level or 1 --drop down menus can have sub menus. The value of "level" determines the drop down sub menu tier.
+function StableBoy_InitializeMenu(frame,level)
+	level = level or 1
 	
-	Spew('self',self)
-	--announce(this:GetName())
-	--announce(this:GetParent():GetName())
-	for k,v in pairs(options) do
-		v.owner = this:GetParent()
-		UIDropDownMenu_AddButton(v,level)
+	if level == 1 then
+		for k,v in pairs(menu) do
+			if( select(2,next(v.submenu)) ) then
+				v.owner = frame:GetParent()
+				v.func = function() StableBoy:Menu_OnClick() end;
+				UIDropDownMenu_AddButton(v,level)
+			end
+		end
+	end
+	
+	if level == 2 then
+		local l1_key = UIDROPDOWNMENU_MENU_VALUE["Level1_Key"];
+		local submenu = menu[l1_key].submenu
+		for k,v in pairs(submenu) do
+			v.owner = frame:GetParent()
+			v.func = function() StableBoy:Menu_OnClick() end;
+			UIDropDownMenu_AddButton(v,level)
+		end
 	end
 end
