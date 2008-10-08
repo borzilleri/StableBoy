@@ -55,7 +55,7 @@ function StableBoy:ADDON_LOADED(addon,...)
 		-- Set Scripts
 		self.frame = CreateFrame("Button", "StableBoyClickFrame", UIParent)
 		self.frame:Hide()
-		self.frame:SetScript("OnClick", function(...) StableBoy:ClickHandler() end)
+		self.frame:SetScript("OnClick", function(...) StableBoy:ClickHandler(IsShiftKeyDown()) end)
 		
 		-- Setup LDB plugin
 		self.ldb = LibStub:GetLibrary("LibDataBroker-1.1"):NewDataObject("StableBoyLDB", {label="StableBoy",text=""})
@@ -154,7 +154,7 @@ function StableBoy:ClickHandler(forceGround)
 	elseif( not InCombatLockdown() and IsOutdoors() ) then
 		-- Only attempt to summon a flying mount if we HAVE flying mounts AND we're in a flyable zone
 		-- AND my hacky attempt to get around the fact that [flyable] doesn't work right in northrend
-		if( #self.myFlyingMounts > 0 and not forceGround and not IsShiftKeyDown() and self:IsFlyableArea() ) then
+		if( #self.myFlyingMounts > 0 and not forceGround and self:IsFlyableArea() ) then
 			self:SummonMount(self.myFlyingMounts)
 		else
 			self:SummonMount(self.myGroundMounts)
