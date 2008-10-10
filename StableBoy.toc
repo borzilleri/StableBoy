@@ -1,5 +1,7 @@
 ## Title: Stable Boy
+## Title-koKR: 마구간지기 (Stable Boy)
 ## Notes: Manages your mounts.
+## Notes-koKR: 최적의 탈것을 단축키를 이용해 자동으로 선택해줍니다.
 ## Author: NightHawk The Sane
 ## X-eMail: nighthawkthesane@gmail.com
 ## Interface: 30000
