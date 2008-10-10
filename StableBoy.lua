@@ -3,12 +3,15 @@ local MOUNT_FLYING = 2
 local SPEED_SLOW = 1 -- 60% (Ground/Flying)
 local SPEED_MEDIUM = 2 -- 100% (Ground) / 280% (Flying)
 local SPEED_FAST = 3 -- 310% (Flying)
-BINDING_HEADER_STABLEBOY = 'StableBoy'
-BINDING_NAME_STABLEBOY_MOUNT_BEST = 'Summon Best Mount'
-BINDING_NAME_STABLEBOY_MOUNT_GROUND = 'Summon Ground Mount'
+local L = STABLEBOY_LOCALE
+
+-- These should now be defined in localization files.
+--BINDING_HEADER_STABLEBOY = 'StableBoy'
+--BINDING_NAME_STABLEBOY_MOUNT_BEST = 'Summon Best Mount'
+--BINDING_NAME_STABLEBOY_MOUNT_GROUND = 'Summon Ground Mount'
 
 local function announce(msg)
-	DEFAULT_CHAT_FRAME:AddMessage("StableBoy: "..msg)
+	DEFAULT_CHAT_FRAME:AddMessage(L.Prefix..msg)
 end
 
 -- This table is for special-casing certain mounts that won't parse properly
@@ -30,14 +33,14 @@ StableBoyTooltip:SetOwner(WorldFrame, "ANCHOR_NONE")
 
 local menu = {
 	["Flying"] = {
-		text = "Flying Mounts",
+		text = L.FlyingMounts,
 		value = { ["Level1_Key"] = "Flying" },
 		notCheckable = true,
 		hasArrow = true,
 		submenu = {}
 	},
 	["Ground"] = {
-		text = "Ground Mounts",
+		text = L.GroundMounts,
 		value = { ["Level1_Key"] = "Ground" },
 		notCheckable = true,
 		hasArrow = true,
@@ -58,7 +61,7 @@ function StableBoy:ADDON_LOADED(addon,...)
 		self.frame:SetScript("OnClick", function(...) StableBoy:ClickHandler(IsShiftKeyDown()) end)
 		
 		-- Setup LDB plugin
-		self.ldb = LibStub:GetLibrary("LibDataBroker-1.1"):NewDataObject("StableBoyLDB", {label="StableBoy",text=""})
+		self.ldb = LibStub:GetLibrary("LibDataBroker-1.1"):NewDataObject("StableBoyLDB", {label=L.Title,text=""})
 		self.ldb.icon = "Interface\\Icons\\Spell_Holy_CrusaderAura"
 		self.ldb.OnClick = function(...) StableBoy:LDB_OnClick(...) end
 		
@@ -105,15 +108,15 @@ function StableBoy:ParseMounts()
 			-- Determine if we're a flying mount.
 			-- Flying mounts can only be used in Outland or Northrend,
 			-- And say so on the tooltip.
-			if text:match("Outland") or text:match("Northrend") then
+			if text:match(L.Outland) or text:match(L.Northrend) then
 				thisMount.mountType = MOUNT_FLYING
 			end
 	
 			-- Figure out how fast this mount is.
-			if text:match("extremely%s+fast") then
+			if text:match(L.SpeedFast) then
 				-- "extremely fast" means it's a 310% Flying mount.
 				thisMount.speed = SPEED_FAST
-			elseif text:match("very%s+fast") then
+			elseif text:match(L.SpeedMedium) then
 				-- "very fast" means it's a 100% speed ground mount, or a 280% speed flying mount.
 				thisMount.speed = SPEED_MEDIUM
 			end
@@ -173,6 +176,8 @@ end
 -- and if you're in Krasus' Landing.
 function StableBoy:IsFlyableArea()
 	SetMapToCurrentZone()
+	local zone = GetRealZoneText()
+	local subzone = GetSubZoneText()
 
 	-- Are we in a 'Flyable' area?
 	if( not IsFlyableArea() ) then return false end;
@@ -183,11 +188,14 @@ function StableBoy:IsFlyableArea()
 	-- We ARE in Northrend, do we have Cold Weather Flying (spell ID 54197)?
 	if( not GetSpellInfo(GetSpellInfo(54197)) ) then return false end;
 	
-	-- we HAVE Cold Weather Flying, are we in Dalaran?
-	if( not (GetRealZoneText() == 'Dalaran') ) then return true end;
+	-- We HAVE Cold Weather Flying, are we in Lake Wintergrasp?
+	if( zone == L.Wintergrasp ) then return false end;
+
+	-- We ARE NOT in Lake Wintergrasp, are we in Dalaran?
+	if( not (zone == L.Dalaran) ) then return true end;
 	
 	-- We ARE in Dalaran, are we in Krasus' Landing?	
-	if( not (GetSubZoneText() == "Krasus' Landing") ) then return false end;
+	if( not (subzone == L.KrasusLanding) ) then return false end;
 	
 	-- We ARE in Krasus' Landing, we can fly.
 	return true;

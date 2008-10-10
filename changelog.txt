@@ -1,0 +1,7 @@
+1.1
+- Abstracted displayed strings for easier localization.
+- Added support for Wintergrasp as a non-flyable area, thanks to DroArc
+- Added koKR localization, thanks to DroArc
+
+1.0
+- Initial release
