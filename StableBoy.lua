@@ -79,7 +79,6 @@ local menu = {
 function StableBoy:ADDON_LOADED(addon,...)
 	if( addon == 'StableBoy' ) then
 		-- db/SV Setup
-		if not StableBoyPCDB then StableBoyPCDB = {} end
 		self.chardb = StableBoyPCDB
 		
 		-- Register Events
@@ -194,6 +193,8 @@ function StableBoy:ParseMounts(login)
 		-- wipe out the mount list, and set our max speed to this mount's speed
 		if( thisSpeed > maxSpeeds[thisType] ) then
 			mounts[thisType] = {}
+			mountsFiltered[thisType] = {}
+			chardb = {}
 			maxSpeeds[thisType] = thisSpeed
 		end
 
@@ -202,10 +203,12 @@ function StableBoy:ParseMounts(login)
 		if( thisSpeed >= maxSpeeds[thisType] ) then
 			-- Add the mount to the list.
 			mounts[thisType][spellID] = {cID=i,name=name}
-
-			-- If the mount is set to be used, or is a NEW mount we just learned,
-			-- add it to a temp SV table, and add it to the filtered list
-			if( self.chardb[spellID] or (not login and not self.mounts[thisType][spellID]) ) then
+			
+			-- Add the mount if:
+			-- self.chardb is nil (no saved vars, new install)
+			-- it's in self.chardb
+			-- we're NOT logging in and it's NOT in self.mounts
+			if( (not self.chardb or self.chardb[spellID]) or (not login and not self.mounts[thisType][spellID]) ) then
 				chardb[spellID] = 1
 				mountsFiltered[thisType][#mountsFiltered[thisType]+1] = mounts[thisType][spellID]
 			end
