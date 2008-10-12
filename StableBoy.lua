@@ -18,7 +18,7 @@ end
 -- This table is for special-casing certain mounts that won't parse properly
 -- in the ParseMounts() method.
 local mountBypass = {
-	[54729] = { mountType=MOUNT_GROUND, speed=SPEED_MEDIUM } -- Winged Steed of the Ebon Blade
+	[54729] = { mountType=MOUNT_FLYING, speed=SPEED_MEDIUM } -- Winged Steed of the Ebon Blade
 }
 
 StableBoy = CreateFrame("frame", "StableBoyFrame", UIParent)
@@ -194,7 +194,6 @@ function StableBoy:ParseMounts(login)
 		if( thisSpeed > maxSpeeds[thisType] ) then
 			mounts[thisType] = {}
 			mountsFiltered[thisType] = {}
-			chardb = {}
 			maxSpeeds[thisType] = thisSpeed
 		end
 
@@ -251,7 +250,7 @@ function StableBoy:ClickHandler(forceGround)
 		-- AND my hacky attempt to get around the fact that [flyable] doesn't work right in northrend
 		if( #self.mountsFiltered[MOUNT_FLYING] > 0 and not forceGround and self:IsFlyableArea() ) then
 			self:SummonMount(self.mountsFiltered[MOUNT_FLYING])
-		elseif( #self.mountssFiltered[MOUNT_GROUND] > 0 )
+		elseif( #self.mountsFiltered[MOUNT_GROUND] > 0 ) then
 			self:SummonMount(self.mountsFiltered[MOUNT_GROUND])
 		end
 	end
