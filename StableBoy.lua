@@ -151,6 +151,7 @@ function StableBoy:ParseMounts(login)
 		[MOUNT_FLYING] = SPEED_SLOW, 
 		[MOUNT_GROUND] = SPEED_SLOW
 	}
+	chardb = {}
 	
 	local maxMounts = GetNumCompanions('MOUNT')
 	for i=1,maxMounts do
@@ -202,26 +203,39 @@ function StableBoy:ParseMounts(login)
 			-- Add the mount to the list.
 			mounts[thisType][spellID] = {cID=i,name=name}
 
-			-- The mount is NEW, so default to to being used.
-			if( not login and not self.mounts[thisType][spellID] ) then
-				self.chardb[spellID] = 1
+			-- If the mount is set to be used, or is a NEW mount we just learned,
+			-- add it to a temp SV table, and add it to the filtered list
+			if( self.chardb[spellID] or (not login and not self.mounts[thisType][spellID]) ) then
+				chardb[spellID] = 1
+				mountsFiltered[thisType][#mountsFiltered[thisType]+1] = mounts[thisType][spellID]
 			end
-			
-			-- Add the mount to the filtered list, only if it's being used.
-			if( self.chardb[spellID] ) then
-				mountsFiltered[thisType][#mountsFiltered[thisType]+1] = {cID=i,name=name}
-			end
-		else
-			-- Clean out SVs of slower mounts that may be left over.
-			self.chardb[spellID] = nil
 		end
 	end -- for i=1,maxMounts
 	
 	StableBoyTooltip:Hide()
 	self.mounts = mounts
 	self.mountsFiltered = mountsFiltered
+	StableBoyPCDB = chardb
+	self.chardb = chardb
 	menu[MOUNT_GROUND].submenu = submenus[MOUNT_GROUND]
 	menu[MOUNT_FLYING].submenu = submenus[MOUNT_FLYING]
+end
+
+function StableBoy:RebuildFilteredMounts()
+	local mountsFiltered = {
+		[MOUNT_GROUND] = {},
+		[MOUNT_FLYING] = {}
+	}
+	
+	for mountType, list in pairs(self.mounts) do
+		for spellID, info in pairs(list) do
+			if( self.chardb[spellID]) then
+				mountsFiltered[mountType][#mountsFiltered[mountType]+1] = info
+			end
+		end
+	end
+	
+	self.mountsFiltered = mountsFiltered
 end
 
 function StableBoy:ClickHandler(forceGround)
@@ -314,28 +328,69 @@ function StableBoy_InitializeMenu(frame,level)
 end
 
 function StableBoy:OptionsFrameCreate()
-	local options = CreateFrame('Frame', 'StableBoyOptionsFrame', UIParent)
+	local options,title,subtitle
+
+	-- Setup the base panel
+	options = CreateFrame('Frame', 'StableBoyOptionsFrame', UIParent)
 	options.name = L.Title
 	options.okay = function(self) StableBoy:Options_Okay(self); end
-
+	
+	title = options:CreateFontString(nil, "ARTWORK", "GameFontNormalLarge")
+	title:SetPoint(TL, 16, -16)
+	title:SetText(L.Title)
+	options.title = title
+	
+	-- Setup the ground mount panel
 	options.ground = CreateFrame('Frame', 'StableBoyOptionsGroundFrame', UIParent)
 	options.ground.name = L.GroundMounts
 	options.ground.parent = L.Title
+	options.ground:SetScript("OnShow", function(self, ...) StableBoy:Options_OnShow(self, ...) end);
+	
+	title = options.ground:CreateFontString(nil, "ARTWORK", "GameFontNormalLarge")
+	title:SetPoint(TL, 16, -16)
+	title:SetText(L.GroundMounts)
+	options.ground.title = title
+	
+	subtitle = options.ground:CreateFontString(nil, "ARTWORK", "GameFontHighlightSmall")
+	subtitle:SetHeight(32)
+	subtitle:SetPoint(TL, title, BL, 0, -8)
+	subtitle:SetPoint(MR, options.ground, -32, 0)
+	subtitle:SetNonSpaceWrap(true)
+	subtitle:SetJustifyH("LEFT")
+	subtitle:SetJustifyV("TOP")
+	subtitle:SetText(L.OptionsDescription)
+	options.ground.subtitle = subtitle
 
 	options.ground.apply = self:CreateButton(options.ground, L.Apply, 96, 22)
 	options.ground.apply:SetPoint(BR, -16, 16)
 	options.ground.apply:SetScript('OnClick', function(self,...) StableBoy:Options_Okay(self,...) end)
-
+	
+	-- Setup the flying mount panel
 	options.flying = CreateFrame('Frame', 'StableBoyOptionsFlyingFrame', UIParent)
 	options.flying.name = L.FlyingMounts
 	options.flying.parent = L.Title
+	options.flying:SetScript("OnShow", function(self, ...) StableBoy:Options_OnShow(self, ...) end);
+
+	title = options.flying:CreateFontString(nil, "ARTWORK", "GameFontNormalLarge")
+	title:SetPoint(TL, 16, -16)
+	title:SetText(L.FlyingMounts)
+	options.flying.title = title
+
+	subtitle = options.flying:CreateFontString(nil, "ARTWORK", "GameFontHighlightSmall")
+	subtitle:SetHeight(32)
+	subtitle:SetPoint(TL, title, BL, 0, -8)
+	subtitle:SetPoint(MR, options.flying, -32, 0)
+	subtitle:SetNonSpaceWrap(true)
+	subtitle:SetJustifyH("LEFT")
+	subtitle:SetJustifyV("TOP")
+	subtitle:SetText(L.OptionsDescription)
+	options.flying.subtitle = subtitle
 
 	options.flying.apply = self:CreateButton(options.flying, L.Apply, 96, 22)
 	options.flying.apply:SetPoint(BR, -16, 16)
 	options.flying.apply:SetScript('OnClick', function(self,...) StableBoy:Options_Okay(self,...) end)
 	
-	options:SetScript("OnShow", function(self, ...) StableBoy:Options_OnShow(self, ...) end);
-	options.ground:SetScript("OnShow", function(self, ...) StableBoy:Options_OnShow(self, ...) end);
+	
 	return options
 end
 
@@ -345,7 +400,7 @@ function StableBoy:Options_OnShow(options, ...)
 	if( not mounts ) then mounts = {} end
 	local i = 0
 	for spellID,info in pairs(self.mounts[MOUNT_GROUND]) do
-		local verticalOffset = -30 + (-20*i)
+		local verticalOffset = -60 + (-20*i)
 		if( not mounts[spellID] ) then
 			mounts[spellID] = self:CreateCheckButton(self.options.ground, info.name)
 		end
@@ -360,7 +415,7 @@ function StableBoy:Options_OnShow(options, ...)
 	if( not mounts ) then mounts = {} end
 	i = 0
 	for spellID,info in pairs(self.mounts[MOUNT_FLYING]) do
-		local verticalOffset = -30 + (-20*i)
+		local verticalOffset = -60 + (-20*i)
 		if( not mounts[spellID] ) then
 			mounts[spellID] = self:CreateCheckButton(self.options.flying, info.name)
 		end
@@ -380,4 +435,6 @@ function StableBoy:Options_Okay(options)
 	for spellID,button in pairs(self.options.flying.mounts) do
 		self.chardb[spellID] = button:GetChecked()
 	end
+	
+	self:RebuildFilteredMounts()
 end
