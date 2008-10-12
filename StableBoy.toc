@@ -5,7 +5,9 @@
 ## Author: NightHawk The Sane
 ## X-eMail: nighthawkthesane@gmail.com
 ## Interface: 30000
-## Version: 1.0
+## Version: 1.2
+## SavedVariablesPerCharacter: StableBoyPCDB
+
 
 libs\LibStub.lua
 libs\CallbackHandler-1.0.lua
@@ -14,6 +16,7 @@ libs\LibDataBroker-1.1.lua
 locales\enUS.lua
 locales\koKR.lua
 
+Options.lua
 StableBoy.lua
 Bindings.xml
 

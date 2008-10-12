@@ -1,14 +1,15 @@
+local TL,TC,TR = "TOPLEFT", "TOP", "TOPRIGHT"
+local ML,MC,MR = "LEFT", "CENTER", "RIGHT"
+local BL,BC,BR = "BOTTOMLEFT", "BOTTOM", "BOTTOMRIGHT"
+
 local MOUNT_GROUND = 1
 local MOUNT_FLYING = 2
+
 local SPEED_SLOW = 1 -- 60% (Ground/Flying)
 local SPEED_MEDIUM = 2 -- 100% (Ground) / 280% (Flying)
 local SPEED_FAST = 3 -- 310% (Flying)
-local L = STABLEBOY_LOCALE
 
--- These should now be defined in localization files.
---BINDING_HEADER_STABLEBOY = 'StableBoy'
---BINDING_NAME_STABLEBOY_MOUNT_BEST = 'Summon Best Mount'
---BINDING_NAME_STABLEBOY_MOUNT_GROUND = 'Summon Ground Mount'
+local L = STABLEBOY_LOCALE
 
 local function announce(msg)
 	DEFAULT_CHAT_FRAME:AddMessage(L.Prefix..msg)
@@ -20,28 +21,54 @@ local mountBypass = {
 	[54729] = { mountType=MOUNT_GROUND, speed=SPEED_MEDIUM } -- Winged Steed of the Ebon Blade
 }
 
-
 StableBoy = CreateFrame("frame", "StableBoyFrame", UIParent)
 StableBoy:SetScript("OnEvent", function(self, event, ...) return self[event](self, ...) end)
 StableBoy:RegisterEvent("ADDON_LOADED")
-StableBoy.myGroundMounts = {}
-StableBoy.myFlyingMounts = {}
+
+-- This should be a -COMPLETE- list of our BEST Flying & Ground Mounts.
+-- This is what the options frame will use to generate its list of mounts for filtering.
+-- NOTE: The Key->Value pairs for these lists should be in the following format:
+--[[
+[spellID] = {
+	cID = 1, -- The index of the mount in your character tab, that you would pass to CallCompanion()
+	name = "Armored Brown Bear",
+}
+]]--
+StableBoy.mounts = {
+	[MOUNT_GROUND] = {},
+	[MOUNT_FLYING] = {},
+}
+
+-- This is a list of the FILTERED Flying & Ground mounts.
+-- This is what gets passed to SummonMount(), to determine which random mount to summon.
+-- NOTE: These tables MUST have consecutive integer indices.
+-- This is necessary for random() to work.
+StableBoy.mountsFiltered = {
+	[MOUNT_GROUND] = {},
+	[MOUNT_FLYING] = {},
+}
+
+--[[
+self.chardb = 
+[spellID] = true -- This indicates the user DOES want to include this in the filtered list
+[spellID] = nil -- This indicates the user DOES NOT want to include this in the filtered list
+]]--
 
 -- Create a scanning tooltip
 CreateFrame("GameTooltip","StableBoyTooltip",UIParent,"GameTooltipTemplate")
 StableBoyTooltip:SetOwner(WorldFrame, "ANCHOR_NONE")
 
 local menu = {
-	["Flying"] = {
+	[MOUNT_FLYING] = {
 		text = L.FlyingMounts,
-		value = { ["Level1_Key"] = "Flying" },
+		value = { ["Level1_Key"] = MOUNT_FLYING },
 		notCheckable = true,
 		hasArrow = true,
 		submenu = {}
 	},
-	["Ground"] = {
+	[MOUNT_GROUND] = {
 		text = L.GroundMounts,
-		value = { ["Level1_Key"] = "Ground" },
+		value = { ["Level1_Key"] = MOUNT_GROUND },
 		notCheckable = true,
 		hasArrow = true,
 		submenu = {}
@@ -51,6 +78,10 @@ local menu = {
 -- I could probably separate the various parts of this method into sub-methods
 function StableBoy:ADDON_LOADED(addon,...)
 	if( addon == 'StableBoy' ) then
+		-- db/SV Setup
+		if not StableBoyPCDB then StableBoyPCDB = {} end
+		self.chardb = StableBoyPCDB
+		
 		-- Register Events
 		self:RegisterEvent('PLAYER_LOGIN')
 		self:RegisterEvent('COMPANION_LEARNED')
@@ -69,84 +100,128 @@ function StableBoy:ADDON_LOADED(addon,...)
 		self.menu = CreateFrame("Frame", "StableBoyDropDownMenu", UIParent, "UIDropDownMenuTemplate")
 --		StableBoyDropDownMenu:SetPoint("CENTER", UIParent)
 		UIDropDownMenu_Initialize(self.menu, StableBoy_InitializeMenu, "MENU")
+
+		-- Interface Options
+		NHTS_OptionsGeneration:ImportOptionsGeneration(self)
+		self.options = self:OptionsFrameCreate()
+		InterfaceOptions_AddCategory(self.options)
+		InterfaceOptions_AddCategory(self.options.ground)
+		InterfaceOptions_AddCategory(self.options.flying)
+
+		-- Slash Commands		
+		SlashCmdList["StableBoyCOMMAND"] = function(cmd)
+			if( cmd == "ground" ) then
+				InterfaceOptionsFrame_OpenToCategory(L.GroundMounts)
+			elseif( cmd == "flying" ) then
+				InterfaceOptionsFrame_OpenToCategory(L.FlyingMounts)
+			else
+				InterfaceOptionsFrame_OpenToCategory(L.Title)
+			end
+		end
+		SLASH_StableBoyCOMMAND1 = "/stableboy"
 	end
 end
 
 function StableBoy:PLAYER_LOGIN(...)
-	self:ParseMounts()
+	self:ParseMounts(true)
 	--self:InitializeMounts()
 end
 
 function StableBoy:COMPANION_LEARNED(...)
-	self:ParseMounts()
+	self:ParseMounts(false)
 	--self:InitializeMounts()
 end
 
-function StableBoy:ParseMounts()
-	self.myFlyingMounts = {}
-	self.myGroundMounts = {}
+function StableBoy:ParseMounts(login)
 	GameTooltip_SetDefaultAnchor(StableBoyTooltip, UIParent)
-
-	local myMounts = {}
+	
+	local mounts = {
+		[MOUNT_FLYING] = {},
+		[MOUNT_GROUND] = {}
+	}
+	local mountsFiltered = {
+		[MOUNT_FLYING] = {},
+		[MOUNT_GROUND] = {}
+	}
+	local submenus = {
+		[MOUNT_FLYING] = {},
+		[MOUNT_GROUND] = {}
+	}
+	local maxSpeeds = {
+		[MOUNT_FLYING] = SPEED_SLOW, 
+		[MOUNT_GROUND] = SPEED_SLOW
+	}
+	
 	local maxMounts = GetNumCompanions('MOUNT')
-	local maxGroundSpeed = SPEED_SLOW
-	local maxFlyingSpeed = SPEED_SLOW
 	for i=1,maxMounts do
-		local thisMount
 		local creatureID,name,spellID = GetCompanionInfo('MOUNT',i)
+		local thisType = MOUNT_GROUND
+		local thisSpeed = SPEED_SLOW
+		
 		if( mountBypass[spellID] ) then
-			thisMount = mountBypass[spellID]
+			thisType = mountBypass[spellID].mountType
+			thisSpeed = mountBypass[spellID].speed
 		else
-			thisMount = { mountType=MOUNT_GROUND, speed=SPEED_SLOW}
 			StableBoyTooltip:SetHyperlink("spell:"..spellID)
 			local numLines = StableBoyTooltip:NumLines()
 			local text = ""
 			for j=1,numLines do
 				text = string.format("%s %s", text, _G["StableBoyTooltipTextLeft"..j]:GetText())
 			end
-	
+
 			-- Determine if we're a flying mount.
 			-- Flying mounts can only be used in Outland or Northrend,
 			-- And say so on the tooltip.
 			if text:match(L.Outland) or text:match(L.Northrend) then
-				thisMount.mountType = MOUNT_FLYING
+				thisType = MOUNT_FLYING
 			end
-	
+
 			-- Figure out how fast this mount is.
 			if text:match(L.SpeedFast) then
-				-- "extremely fast" means it's a 310% Flying mount.
-				thisMount.speed = SPEED_FAST
+				-- 310% Flying Mount
+				thisSpeed = SPEED_FAST
 			elseif text:match(L.SpeedMedium) then
-				-- "very fast" means it's a 100% speed ground mount, or a 280% speed flying mount.
-				thisMount.speed = SPEED_MEDIUM
-			end
-			
-			-- Update our max speed values if this is the fastest mount we've seen yet
-			if( thisMount.mountType == MOUNT_GROUND and thisMount.speed > maxGroundSpeed ) then
-				maxGroundSpeed = thisMount.speed
-			elseif( thisMount.mountType == MOUNT_FLYING and thisMount.speed > maxFlyingSpeed ) then
-				maxFlyingSpeed = thisMount.speed
-			end
-			
-			-- Add this mount to our menu
-			if( thisMount.mountType == MOUNT_FLYING ) then
-				menu["Flying"].submenu[i] = { text=name, value=i }
-			elseif( thisMount.mountType == MOUNT_GROUND ) then
-				menu["Ground"].submenu[i] = { text=name, value=i }
+				-- 100% Ground Mount or 280% Flying Mount
+				thisSpeed = SPEED_MEDIUM
 			end
 		end
+
+		-- Add Mount to LDB Menu
+		submenus[thisType][i] = {text=name,value=i}
 		
-		myMounts[i] = thisMount
-	end -- i=1,maxMounts
+		-- If this mount is faster than anything seen yet, 
+		-- wipe out the mount list, and set our max speed to this mount's speed
+		if( thisSpeed > maxSpeeds[thisType] ) then
+			mounts[thisType] = {}
+			maxSpeeds[thisType] = thisSpeed
+		end
+
+		-- Add this mount to our list, only if it's at least as fast
+		-- as the fastest mount seen. (which may be this very mount)
+		if( thisSpeed >= maxSpeeds[thisType] ) then
+			-- Add the mount to the list.
+			mounts[thisType][spellID] = {cID=i,name=name}
+
+			-- The mount is NEW, so default to to being used.
+			if( not login and not self.mounts[thisType][spellID] ) then
+				self.chardb[spellID] = 1
+			end
+			
+			-- Add the mount to the filtered list, only if it's being used.
+			if( self.chardb[spellID] ) then
+				mountsFiltered[thisType][#mountsFiltered[thisType]+1] = {cID=i,name=name}
+			end
+		else
+			-- Clean out SVs of slower mounts that may be left over.
+			self.chardb[spellID] = nil
+		end
+	end -- for i=1,maxMounts
+	
 	StableBoyTooltip:Hide()
-		
-	for i,thisMount in pairs(myMounts) do
-		if( thisMount.mountType == MOUNT_GROUND and thisMount.speed >= maxGroundSpeed ) then
-			self.myGroundMounts[#self.myGroundMounts+1] = i
-		elseif( thisMount.mountType == MOUNT_FLYING and thisMount.speed >= maxFlyingSpeed ) then
-			self.myFlyingMounts[#self.myFlyingMounts+1] = i
-		end
-	end -- i,thisMount in myMounts
+	self.mounts = mounts
+	self.mountsFiltered = mountsFiltered
+	menu[MOUNT_GROUND].submenu = submenus[MOUNT_GROUND]
+	menu[MOUNT_FLYING].submenu = submenus[MOUNT_FLYING]
 end
 
 function StableBoy:ClickHandler(forceGround)
@@ -157,17 +232,16 @@ function StableBoy:ClickHandler(forceGround)
 	elseif( not InCombatLockdown() and IsOutdoors() ) then
 		-- Only attempt to summon a flying mount if we HAVE flying mounts AND we're in a flyable zone
 		-- AND my hacky attempt to get around the fact that [flyable] doesn't work right in northrend
-		if( #self.myFlyingMounts > 0 and not forceGround and self:IsFlyableArea() ) then
-			self:SummonMount(self.myFlyingMounts)
+		if( #self.mountsFiltered[MOUNT_FLYING] > 0 and not forceGround and self:IsFlyableArea() ) then
+			self:SummonMount(self.mountsFiltered[MOUNT_FLYING])
 		else
-			self:SummonMount(self.myGroundMounts)
+			self:SummonMount(self.mountsFiltered[MOUNT_GROUND])
 		end
 	end
 end
 
 function StableBoy:SummonMount(mountList)
-	--announce("Summoning!")
-	CallCompanion("MOUNT",mountList[random(#mountList)])
+	CallCompanion("MOUNT",mountList[random(#mountList)].cID)
 end
 
 -- A more robust replacement for the IsFlyableArea() method.
@@ -236,5 +310,74 @@ function StableBoy_InitializeMenu(frame,level)
 			v.func = function() StableBoy:Menu_OnClick() end;
 			UIDropDownMenu_AddButton(v,level)
 		end
+	end
+end
+
+function StableBoy:OptionsFrameCreate()
+	local options = CreateFrame('Frame', 'StableBoyOptionsFrame', UIParent)
+	options.name = L.Title
+	options.okay = function(self) StableBoy:Options_Okay(self); end
+
+	options.ground = CreateFrame('Frame', 'StableBoyOptionsGroundFrame', UIParent)
+	options.ground.name = L.GroundMounts
+	options.ground.parent = L.Title
+
+	options.ground.apply = self:CreateButton(options.ground, L.Apply, 96, 22)
+	options.ground.apply:SetPoint(BR, -16, 16)
+	options.ground.apply:SetScript('OnClick', function(self,...) StableBoy:Options_Okay(self,...) end)
+
+	options.flying = CreateFrame('Frame', 'StableBoyOptionsFlyingFrame', UIParent)
+	options.flying.name = L.FlyingMounts
+	options.flying.parent = L.Title
+
+	options.flying.apply = self:CreateButton(options.flying, L.Apply, 96, 22)
+	options.flying.apply:SetPoint(BR, -16, 16)
+	options.flying.apply:SetScript('OnClick', function(self,...) StableBoy:Options_Okay(self,...) end)
+	
+	options:SetScript("OnShow", function(self, ...) StableBoy:Options_OnShow(self, ...) end);
+	options.ground:SetScript("OnShow", function(self, ...) StableBoy:Options_OnShow(self, ...) end);
+	return options
+end
+
+function StableBoy:Options_OnShow(options, ...)	
+	-- Create ground mount checkboxes
+	local mounts = self.options.ground.mounts
+	if( not mounts ) then mounts = {} end
+	local i = 0
+	for spellID,info in pairs(self.mounts[MOUNT_GROUND]) do
+		local verticalOffset = -30 + (-20*i)
+		if( not mounts[spellID] ) then
+			mounts[spellID] = self:CreateCheckButton(self.options.ground, info.name)
+		end
+		mounts[spellID]:SetChecked(self.chardb[spellID])
+		mounts[spellID]:SetPoint(TL, 10, verticalOffset)
+		i = i + 1
+	end
+	self.options.ground.mounts = mounts
+	
+	-- Create Flying mount checkboxes
+	mounts = self.options.flying.mounts
+	if( not mounts ) then mounts = {} end
+	i = 0
+	for spellID,info in pairs(self.mounts[MOUNT_FLYING]) do
+		local verticalOffset = -30 + (-20*i)
+		if( not mounts[spellID] ) then
+			mounts[spellID] = self:CreateCheckButton(self.options.flying, info.name)
+		end
+		mounts[spellID]:SetChecked(self.chardb[spellID])
+		mounts[spellID]:SetPoint(TL, 10, verticalOffset)
+		i = i + 1
+	end
+	self.options.flying.mounts = mounts
+	
+end
+
+function StableBoy:Options_Okay(options)
+	for spellID,button in pairs(self.options.ground.mounts) do
+		self.chardb[spellID] = button:GetChecked()
+	end
+	
+	for spellID,button in pairs(self.options.flying.mounts) do
+		self.chardb[spellID] = button:GetChecked()
 	end
 end

@@ -20,3 +20,5 @@ L.SpeedMedium = "very%s+fast"
 L.Dalaran = "Dalaran"
 L.KrasusLanding = "Krasus' Landing"
 L.Wintergrasp = "Wintergrasp"
+
+L.Apply = "Apply"

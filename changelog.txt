@@ -1,3 +1,9 @@
+1.2
+- Added the ability to filter which mounts are used for random selection. (Yes. I lied when I said I had no plans to do this. Sue me.)
+- Added a UI in the Interface Options to select which mounts to use in the random selection. Note: This only allows you to select among your "best" mounts.
+- Added slash commands to access the Interface Options panels: /stableboy, /stableboy ground, or /stableboy flying
+- Significant internal code reorganization to hopefully make things more efficiant, easier to read, and easier to maintain.
+
 1.1
 - Abstracted displayed strings for easier localization.
 - Added support for Wintergrasp as a non-flyable area, thanks to DroArc
