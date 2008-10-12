@@ -248,7 +248,7 @@ function StableBoy:ClickHandler(forceGround)
 		-- AND my hacky attempt to get around the fact that [flyable] doesn't work right in northrend
 		if( #self.mountsFiltered[MOUNT_FLYING] > 0 and not forceGround and self:IsFlyableArea() ) then
 			self:SummonMount(self.mountsFiltered[MOUNT_FLYING])
-		else
+		elseif( #self.mountssFiltered[MOUNT_GROUND] > 0 )
 			self:SummonMount(self.mountsFiltered[MOUNT_GROUND])
 		end
 	end
