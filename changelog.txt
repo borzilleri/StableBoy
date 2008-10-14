@@ -1,3 +1,6 @@
+1.2.1
+- The Options panels now use a scrolling frame to display the mount checkboxes, showing a maximum of 15 checkboxes at once. This should avoid ugliness if you have a lot of mounts.
+
 1.2
 - Added the ability to filter which mounts are used for random selection. (Yes. I lied when I said I had no plans to do this. Sue me.)
 - Added a UI in the Interface Options to select which mounts to use in the random selection. Note: This only allows you to select among your "best" mounts.
