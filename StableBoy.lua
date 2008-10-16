@@ -438,7 +438,7 @@ function StableBoy:OptionsFrameCreate()
 	panel.scrollFrame = CreateFrame('ScrollFrame', 'StableBoyOptionsFlyingScrollFrame', panel, 'FauxScrollFrameTemplate')
 	panel.scrollFrame:SetPoint(TL, 0, -60)
 	panel.scrollFrame:SetPoint(TR, -30, -60)
-	panel.scrollFrame:SetHeight(100)
+	panel.scrollFrame:SetHeight(MAX_CHECKBOXES_SHOWN * CHECKBOX_VERTICAL_SIZE)
 	panel.scrollFrame:SetScript('OnVerticalScroll', function(self, offset) return FauxScrollFrame_OnVerticalScroll(self, offset, 20, function() return StableBoy_ScrollBar_Update(MOUNT_FLYING) end) end)
 	--panel.scrollFrame:SetScript('OnShow', StableBoy_ScrollBar_Update(MOUNT_FLYING))
 	

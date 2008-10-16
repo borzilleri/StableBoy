@@ -1,3 +1,8 @@
+1.2.2
+- Fix a bug that would cause the Options UI to not update properly after learning a mount.
+- Fix some typos/bugs with naming and parenting of the Flying Mount scroll frame.
+- Fix a bug with the sizing of the Flying Mount Scroll frame.
+
 1.2.1
 - The Options panels now use a scrolling frame to display the mount checkboxes, showing a maximum of 15 checkboxes at once. This should avoid ugliness if you have a lot of mounts.
 
