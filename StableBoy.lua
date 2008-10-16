@@ -132,14 +132,14 @@ end
 
 function StableBoy:PLAYER_LOGIN(...)
 	self:ParseMounts(true)
-	--self:InitializeMounts()
 	StableBoy_ScrollBar_Update(MOUNT_GROUND)
 	StableBoy_ScrollBar_Update(MOUNT_FLYING)
 end
 
 function StableBoy:COMPANION_LEARNED(...)
 	self:ParseMounts(false)
-	--self:InitializeMounts()
+	StableBoy_ScrollBar_Update(MOUNT_GROUND)
+	StableBoy_ScrollBar_Update(MOUNT_FLYING)
 end
 
 function StableBoy:ParseMounts(login)
@@ -435,7 +435,7 @@ function StableBoy:OptionsFrameCreate()
 	panel.apply:SetPoint(BR, -16, 16)
 	panel.apply:SetScript('OnClick', function(self,...) StableBoy:Options_Okay(self,...) end)
 	
-	panel.scrollFrame = CreateFrame('ScrollFrame', 'StableBoyOptionsGroundScrollFrame', options.flying, 'FauxScrollFrameTemplate')
+	panel.scrollFrame = CreateFrame('ScrollFrame', 'StableBoyOptionsFlyingScrollFrame', panel, 'FauxScrollFrameTemplate')
 	panel.scrollFrame:SetPoint(TL, 0, -60)
 	panel.scrollFrame:SetPoint(TR, -30, -60)
 	panel.scrollFrame:SetHeight(100)
