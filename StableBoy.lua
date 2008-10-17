@@ -132,14 +132,16 @@ end
 
 function StableBoy:PLAYER_LOGIN(...)
 	self:ParseMounts(true)
-	StableBoy_ScrollBar_Update(MOUNT_GROUND)
-	StableBoy_ScrollBar_Update(MOUNT_FLYING)
+	self:Options_Update()
+--	StableBoy_ScrollBar_Update(MOUNT_GROUND)
+--	StableBoy_ScrollBar_Update(MOUNT_FLYING)
 end
 
 function StableBoy:COMPANION_LEARNED(...)
 	self:ParseMounts(false)
-	StableBoy_ScrollBar_Update(MOUNT_GROUND)
-	StableBoy_ScrollBar_Update(MOUNT_FLYING)
+	self:Options_Update()
+--	StableBoy_ScrollBar_Update(MOUNT_GROUND)
+--	StableBoy_ScrollBar_Update(MOUNT_FLYING)
 end
 
 function StableBoy:ParseMounts(login)
@@ -361,7 +363,10 @@ function StableBoy:OptionsFrameCreate()
 	options = CreateFrame('Frame', 'StableBoyOptionsFrame', UIParent)
 	options.panels = {}
 	options.name = L.Title
-	options.okay = function(self) StableBoy:Options_Okay(self); end
+	options.okay = function(self,...) StableBoy:Options_Okay(self,...); end
+	options.cancel = function(self,...) StableBoy:Options_Cancel(self,...); end
+	options.default = function(self,...) StableBoy:Options_Defaults(self,...); end
+	options.refresh = function(self,...) StableBoy:Options_Update(); end
 	
 	title = options:CreateFontString(nil, "ARTWORK", "GameFontNormalLarge")
 	title:SetPoint(TL, 16, -16)
@@ -370,9 +375,11 @@ function StableBoy:OptionsFrameCreate()
 	
 	-- Setup the ground mount panel
 	panel = CreateFrame('Frame', 'StableBoyOptionsGroundFrame', UIParent)
+	panel.mountType = MOUNT_GROUND
 	panel.name = L.GroundMounts
 	panel.parent = L.Title
-	--panel:SetScript("OnShow", function(self, ...) StableBoy:Options_OnShow(self, ...) end);
+	panel.default = function(self,...) StableBoy:Options_Defaults(self,...); end
+	panel.refresh = function(self,...) StableBoy:Options_Update(self.mountType); end
 	
 	title = panel:CreateFontString(nil, "ARTWORK", "GameFontNormalLarge")
 	title:SetPoint(TL, 16, -16)
@@ -397,8 +404,7 @@ function StableBoy:OptionsFrameCreate()
 	panel.scrollFrame:SetPoint(TL, 0, -60)
 	panel.scrollFrame:SetPoint(TR, -30, -60)
 	panel.scrollFrame:SetHeight(MAX_CHECKBOXES_SHOWN * CHECKBOX_VERTICAL_SIZE)
-	panel.scrollFrame:SetScript('OnVerticalScroll', function(self, offset) return FauxScrollFrame_OnVerticalScroll(self, offset, 20, function() return StableBoy_ScrollBar_Update(MOUNT_GROUND) end) end)
-	--panel.scrollFrame:SetScript('OnShow', StableBoy_ScrollBar_Update(MOUNT_GROUND))
+	panel.scrollFrame:SetScript('OnVerticalScroll', function(self, offset) return FauxScrollFrame_OnVerticalScroll(self, offset, 20, function() return StableBoy:Options_Update(MOUNT_GROUND) end) end)
 	
 	panel.checkboxes = {}
 	for i=1,MAX_CHECKBOXES_SHOWN do
@@ -412,9 +418,11 @@ function StableBoy:OptionsFrameCreate()
 	
 	-- Setup the flying mount panel
 	panel = CreateFrame('Frame', 'StableBoyOptionsFlyingFrame', UIParent)
+	panel.mountType = MOUNT_FLYING
 	panel.name = L.FlyingMounts
 	panel.parent = L.Title
-	--panel:SetScript("OnShow", function(self, ...) StableBoy:Options_OnShow(self, ...) end);
+	panel.default = function(self,...) StableBoy:Options_Defaults(self,...); end
+	panel.refresh = function(self,...) StableBoy:Options_Update(self.mountType); end
 
 	title = panel:CreateFontString(nil, "ARTWORK", "GameFontNormalLarge")
 	title:SetPoint(TL, 16, -16)
@@ -439,8 +447,7 @@ function StableBoy:OptionsFrameCreate()
 	panel.scrollFrame:SetPoint(TL, 0, -60)
 	panel.scrollFrame:SetPoint(TR, -30, -60)
 	panel.scrollFrame:SetHeight(MAX_CHECKBOXES_SHOWN * CHECKBOX_VERTICAL_SIZE)
-	panel.scrollFrame:SetScript('OnVerticalScroll', function(self, offset) return FauxScrollFrame_OnVerticalScroll(self, offset, 20, function() return StableBoy_ScrollBar_Update(MOUNT_FLYING) end) end)
-	--panel.scrollFrame:SetScript('OnShow', StableBoy_ScrollBar_Update(MOUNT_FLYING))
+	panel.scrollFrame:SetScript('OnVerticalScroll', function(self, offset) return FauxScrollFrame_OnVerticalScroll(self, offset, 20, function() return StableBoy:Options_Update(MOUNT_FLYING) end) end)
 	
 	panel.checkboxes = {}
 	for i=1,MAX_CHECKBOXES_SHOWN do
@@ -459,30 +466,74 @@ function StableBoy:CheckBox_OnClick(button, mountType, ...)
 	self.mounts[mountType][button.spellID].enabled = button:GetChecked()
 end
 
-function StableBoy:Options_Okay(options)
+--[[
+The user hit "Okay" so we want to take their selections, and apply it to our
+saved vars, and rebuild our filtered mounts list.
+The user's selections should be represented by the "enabled" variable in the 
+mounts[mountType] table.
+]]--
+function StableBoy:Options_Okay(panel)
 	for mountType,list in pairs(self.mounts) do
-		for spellID,info in pairs(self.mounts[MOUNT_GROUND]) do
+		for spellID,info in pairs(list) do
 			self.chardb[spellID] = info.enabled
 		end
 	end
 	self:RebuildFilteredMounts()
 end
 
-function StableBoy_ScrollBar_Update(mountType)
-	local line, linePlusOffset
-	FauxScrollFrame_Update( StableBoy.options.panels[mountType].scrollFrame, #StableBoy.mountOrder[mountType], MAX_CHECKBOXES_SHOWN, CHECKBOX_VERTICAL_SIZE )
-	
-	for line=1,MAX_CHECKBOXES_SHOWN do
-		linePlusOffset = line + FauxScrollFrame_GetOffset( StableBoy.options.panels[mountType].scrollFrame )
-		local button = StableBoy.options.panels[mountType].checkboxes[line]
-		if( linePlusOffset <= #StableBoy.mountOrder[mountType] ) then
-			getglobal(button:GetName() .. 'Text'):SetText(StableBoy.mounts[mountType][StableBoy.mountOrder[mountType][linePlusOffset]].name)
-			button:SetChecked(StableBoy.mounts[mountType][StableBoy.mountOrder[mountType][linePlusOffset]].enabled)
-			button.spellID = StableBoy.mountOrder[mountType][linePlusOffset]
-			button:Show()
-		else
-			button:Hide()
+--[[
+The user hit "Cancel", so we need to reset their selections. We update the
+"enabled" varaible in the mounts[mountType] table to reflect the setting in the
+saved vars.
+
+NOTE: We should NOT have to rebuild our filtered mounts list here, because
+nothing should have changed.
+]]--
+function StableBoy:Options_Cancel(panel,...)
+	for mountType,list in pairs(self.mounts) do
+		for spellID,info in pairs(list) do
+			info.enabled = self.chardb[spellID]
 		end
 	end
 end
 
+--[[
+The user hit "Defaults", so we return to our default state, which is every mount
+enabled.
+]]--
+function StableBoy:Options_Defaults(panel,...)
+	for spellID,info in pairs(self.mounts[panel.mountType]) do
+		info.enabled = 1
+		self.chardb[spellID] = 1
+	end
+	self:RebuildFilteredMounts()
+end
+
+function StableBoy:Options_Update(mountType,...)
+	-- If we weren't passed in a mount type, just call ourself twice,
+	-- passing in mount types explicitly
+	if( not mountType ) then
+		self:Options_Update(MOUNT_GROUND,...)
+		self:Options_Update(MOUNT_FLYING,...)
+	else
+		local scrollFrame = self.options.panels[mountType].scrollFrame
+		local mounts = self.mounts[mountType]
+		local mountOrder = self.mountOrder[mountType]
+		FauxScrollFrame_Update( scrollFrame, #mountOrder, MAX_CHECKBOXES_SHOWN, CHECKBOX_VERTICAL_SIZE )
+		
+		for line=1,MAX_CHECKBOXES_SHOWN do
+			local linePlusOffset = line + FauxScrollFrame_GetOffset( scrollFrame )
+			
+			local button = self.options.panels[mountType].checkboxes[line]
+			
+			if( linePlusOffset <= #mountOrder ) then
+				getglobal(button:GetName()..'Text'):SetText(mounts[mountOrder[linePlusOffset]].name)
+				button:SetChecked(mounts[mountOrder[linePlusOffset]].enabled)
+				button.spellID = mountOrder[linePlusOffset]
+				button:Show()
+			else
+				button:Hide()
+			end
+		end
+	end
+end

@@ -1,3 +1,7 @@
+1.2.3
+- Implemented functions for the "Cancel" and "Defaults" buttons in the Options UI. "Defaults" will reset your selections to the defaults, which is -EVERYTHING ENABLED-. Don't say I didn't warn you.
+- Hopefully sqashed a bunch of bugs causing the Options UI to not update the status of checkboxes properly, and cause the selection to not affect the mounts used for random summoning. FauxScrollFrames can suck it.
+
 1.2.2
 - Fix a bug that would cause the Options UI to not update properly after learning a mount.
 - Fix some typos/bugs with naming and parenting of the Flying Mount scroll frame.
