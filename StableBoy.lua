@@ -5,6 +5,7 @@ local BL,BC,BR = "BOTTOMLEFT", "BOTTOM", "BOTTOMRIGHT"
 local MOUNT_GROUND = 1
 local MOUNT_FLYING = 2
 
+local SPEED_ADAPTS = 0 -- This mount adaps to the fastest speed known for its type.
 local SPEED_SLOW = 1 -- 60% (Ground/Flying)
 local SPEED_MEDIUM = 2 -- 100% (Ground) / 280% (Flying)
 local SPEED_FAST = 3 -- 310% (Flying)
@@ -21,7 +22,8 @@ end
 -- This table is for special-casing certain mounts that won't parse properly
 -- in the ParseMounts() method.
 local mountBypass = {
-	[54729] = { mountType=MOUNT_FLYING, speed=SPEED_MEDIUM } -- Winged Steed of the Ebon Blade
+	[54729] = { mountType=MOUNT_FLYING, speed=SPEED_ADAPTS } -- Winged Steed of the Ebon Blade
+	[58983] = { mountType=MOUNT_GROUND, speed=SPEED_ADAPTS } -- Big Blizzard Bear (BlizzCon 2008)
 }
 
 StableBoy = CreateFrame("frame", "StableBoyFrame", UIParent)
@@ -176,8 +178,14 @@ function StableBoy:ParseMounts(login)
 		local thisSpeed = SPEED_SLOW
 		
 		if( mountBypass[spellID] ) then
-			thisType = mountBypass[spellID].mountType
-			thisSpeed = mountBypass[spellID].speed
+			if( mountBypass[spellID].speed == SPEED_ADAPTS ) then
+				mountBypass[spellID].addLater = true
+				mountBypass[spellID].cID = i
+				mountBypass[spellID].name = name
+			else
+				thisType = mountBypass[spellID].mountType
+				thisSpeed = mountBypass[spellID].speed
+			end
 		else
 			StableBoyTooltip:SetHyperlink("spell:"..spellID)
 			local numLines = StableBoyTooltip:NumLines()
@@ -233,6 +241,23 @@ function StableBoy:ParseMounts(login)
 	end -- for i=1,maxMounts
 	StableBoyTooltip:Hide()
 	
+	-- Check the mountBypass table, for any mounts flagged as "add later".
+	-- Typically this indicates mounts that adapt to the user's best riding skill
+	-- So we should always add them.
+	for spellID,info in pairs(mountBypass) do
+		if( info.addLater ) then
+			mounts[info.mountType][spellID] = {cID=info.cID,name=info.name}
+			
+			if( (not self.chardb or self.chardb[spellID]) or (not login and not self.mounts[info.mountType][spellID]) ) then
+				chardb[spellID] = 1
+				mountsFiltered[info.mountType][#mountsFiltered[info.mountType]+1] = mounts[info.mountType][spellID]
+				mounts[info.mountType][spellID].enabled = 1
+			end
+		end
+	end
+	
+	-- Generate an order for the mounts we have.
+	-- This is necessary to handle updating the checkboxes in the FauxScrollFrame properly
 	for mountType,list in pairs(mounts) do
 		local i = 1
 		for sID,info in pairs(list) do
@@ -241,6 +266,8 @@ function StableBoy:ParseMounts(login)
 		end
 	end	
 	
+	-- Persist our generated data back to the mod
+	-- I have to wonder if this would not be better as multiple return values
 	self.mounts = mounts
 	self.mountsFiltered = mountsFiltered
 	self.mountOrder = mountOrder
