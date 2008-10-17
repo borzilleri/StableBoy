@@ -110,7 +110,7 @@ function StableBoy:ADDON_LOADED(addon,...)
 		self.menu = CreateFrame("Frame", "StableBoyDropDownMenu", UIParent, "UIDropDownMenuTemplate")
 --		StableBoyDropDownMenu:SetPoint("CENTER", UIParent)
 		UIDropDownMenu_Initialize(self.menu, StableBoy_InitializeMenu, "MENU")
-
+		
 		-- Interface Options
 		NHTS_OptionsGeneration:ImportOptionsGeneration(self)
 		self.options = self:OptionsFrameCreate()
@@ -135,15 +135,11 @@ end
 function StableBoy:PLAYER_LOGIN(...)
 	self:ParseMounts(true)
 	self:Options_Update()
---	StableBoy_ScrollBar_Update(MOUNT_GROUND)
---	StableBoy_ScrollBar_Update(MOUNT_FLYING)
 end
 
 function StableBoy:COMPANION_LEARNED(...)
 	self:ParseMounts(false)
 	self:Options_Update()
---	StableBoy_ScrollBar_Update(MOUNT_GROUND)
---	StableBoy_ScrollBar_Update(MOUNT_FLYING)
 end
 
 function StableBoy:ParseMounts(login)
