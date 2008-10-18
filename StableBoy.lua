@@ -22,8 +22,8 @@ end
 -- This table is for special-casing certain mounts that won't parse properly
 -- in the ParseMounts() method.
 local mountBypass = {
-	[54729] = { mountType=MOUNT_FLYING, speed=SPEED_ADAPTS } -- Winged Steed of the Ebon Blade
-	[58983] = { mountType=MOUNT_GROUND, speed=SPEED_ADAPTS } -- Big Blizzard Bear (BlizzCon 2008)
+	[54729] = { mountType=MOUNT_FLYING, speed=SPEED_ADAPTS }, -- Winged Steed of the Ebon Blade
+	[58983] = { mountType=MOUNT_GROUND, speed=SPEED_ADAPTS }, -- Big Blizzard Bear (BlizzCon 2008)
 }
 
 StableBoy = CreateFrame("frame", "StableBoyFrame", UIParent)
