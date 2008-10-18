@@ -5,7 +5,7 @@
 ## Author: NightHawk The Sane
 ## X-eMail: nighthawkthesane@gmail.com
 ## Interface: 30000
-## Version: 1.2.3
+## Version: 1.2.4
 ## SavedVariablesPerCharacter: StableBoyPCDB
 
 

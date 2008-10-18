@@ -1,3 +1,6 @@
+1.2.4
+- Added support for the two "dynamic speed" mounts ('Big Blizzard Bear' and 'Winged Steed of the Ebon Blade') whose speeds adjust to your riding skill. These mounts should properly show up now.
+
 1.2.3
 - Implemented functions for the "Cancel" and "Defaults" buttons in the Options UI. "Defaults" will reset your selections to the defaults, which is -EVERYTHING ENABLED-. Don't say I didn't warn you.
 - Hopefully sqashed a bunch of bugs causing the Options UI to not update the status of checkboxes properly, and cause the selection to not affect the mounts used for random summoning. FauxScrollFrames can suck it.
