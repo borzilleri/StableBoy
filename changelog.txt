@@ -1,3 +1,8 @@
+1.3.1
+- Remove bindings.xml from TOC, because apprently it's not supposed to be there.
+- Add support for 'The Underbelly' subzone of Dalaran. NOTE: This is semi-inaccurate. Like Krasus' Landing, there are parts of "The Underbelly" that are flyable, and parts that are not. Because those parts are (typically) areas you're passing through between other sub-zones, I'll err on the side of calling it flyable.
+- Don't try and parse/use AQ-only mounts. If you're in AQ and want to use one of these, you'll have to do it manually.
+
 1.3
 - Fairly significant change in the SV setup. This version WILL wipe out your previous SVs and reset your settings to the defaults (every mount enabled). Sorry for the inconvenience, but this change allowed..
 - Added support for Headless Horseman's mount (hopefully). The infrastructure changes should support future flight-capable mounts that are usable as ground mounts in non-flying areas.

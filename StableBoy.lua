@@ -177,6 +177,7 @@ function StableBoy:ParseMounts(login)
 		local creatureID,name,spellID = GetCompanionInfo('MOUNT',i)
 		local thisType = MOUNT_GROUND
 		local thisSpeed = SPEED_SLOW
+		local aqMount = false
 		
 		if( mountBypass[spellID] ) then
 			if( mountBypass[spellID].speed == SPEED_ADAPTS ) then
@@ -193,6 +194,11 @@ function StableBoy:ParseMounts(login)
 			local text = ""
 			for j=1,numLines do
 				text = string.format("%s %s", text, _G["StableBoyTooltipTextLeft"..j]:GetText())
+			end
+			
+			-- Is this a special AQ mount?
+			if( text:match(L.TempleOfAhnQiraj) ) then
+				aqMount = true
 			end
 
 			-- Determine if we're a flying mount.
@@ -211,57 +217,59 @@ function StableBoy:ParseMounts(login)
 				thisSpeed = SPEED_MEDIUM
 			end
 		end
-
-		-- Add Mount to LDB Menu
-		if( thisType == MOUNT_BOTH ) then
-			submenus[MOUNT_FLYING][i] = {text=name,value=i}
-			submenus[MOUNT_GROUND][i] = {text=name,value=i}
-		else
-			submenus[thisType][i] = {text=name,value=i}
-		end
 		
-		-- If this mount is faster than anything seen yet, 
-		-- wipe out the mount list, and set our max speed to this mount's speed
-		if( (thisType == MOUNT_GROUND or thisType == MOUNT_BOTH) and thisSpeed > maxSpeeds[MOUNT_GROUND] ) then
-			mounts[MOUNT_GROUND] = {}
-			mountsFiltered[MOUNT_GROUND] = {}
-			maxSpeeds[MOUNT_GROUND] = thisSpeed
-		end
-		if( (thisType == MOUNT_FLYING or thisType == MOUNT_FLYING) and thisSpeed > maxSpeeds[MOUNT_FLYING] ) then
-			mounts[MOUNT_FLYING] = {}
-			mountsFiltered[MOUNT_FLYING] = {}
-			maxSpeeds[MOUNT_FLYING] = thisSpeed
-		end
-
-		
-		-- Add this mount to our list, only if it's at least as fast
-		-- as the fastest mount seen. (which may be this very mount)
-		if( (thisType == MOUNT_GROUND or thisType == MOUNT_BOTH) and thisSpeed >= maxSpeeds[MOUNT_GROUND] ) then
-			-- Add the mount to the list.
-			mounts[MOUNT_GROUND][spellID] = {cID=i,name=name}
-			
-			-- Add the mount if:
-			-- self.chardb is nil (no saved vars, new install)
-			-- it's in self.chardb
-			-- we're NOT logging in and it's NOT in self.mounts
-			if( (not self.chardb or not self.chardb[MOUNT_GROUND] or self.chardb[MOUNT_GROUND][spellID]) or (not login and not self.mounts[MOUNT_GROUND][spellID]) ) then
-				chardb[MOUNT_GROUND][spellID] = 1
-				mountsFiltered[MOUNT_GROUND][#mountsFiltered[MOUNT_GROUND]+1] = mounts[MOUNT_GROUND][spellID]
-				mounts[MOUNT_GROUND][spellID].enabled = 1
+		if( not aqMount ) then
+			-- Add Mount to LDB Menu
+			if( thisType == MOUNT_BOTH ) then
+				submenus[MOUNT_FLYING][i] = {text=name,value=i}
+				submenus[MOUNT_GROUND][i] = {text=name,value=i}
+			else
+				submenus[thisType][i] = {text=name,value=i}
 			end
-		end
-		if( (thisType == MOUNT_FLYING or thisType == MOUNT_FLYING) and thisSpeed >= maxSpeeds[MOUNT_FLYING] ) then
-			-- Add the mount to the list.
-			mounts[MOUNT_FLYING][spellID] = {cID=i,name=name}
 			
-			-- Add the mount if:
-			-- self.chardb is nil (no saved vars, new install)
-			-- it's in self.chardb
-			-- we're NOT logging in and it's NOT in self.mounts
-			if( (not self.chardb or not self.chardb[MOUNT_FLYING] or self.chardb[MOUNT_FLYING][spellID]) or (not login and not self.mounts[MOUNT_FLYING][spellID]) ) then
-				chardb[MOUNT_FLYING][spellID] = 1
-				mountsFiltered[MOUNT_FLYING][#mountsFiltered[MOUNT_FLYING]+1] = mounts[MOUNT_FLYING][spellID]
-				mounts[MOUNT_FLYING][spellID].enabled = 1
+			-- If this mount is faster than anything seen yet, 
+			-- wipe out the mount list, and set our max speed to this mount's speed
+			if( (thisType == MOUNT_GROUND or thisType == MOUNT_BOTH) and thisSpeed > maxSpeeds[MOUNT_GROUND] ) then
+				mounts[MOUNT_GROUND] = {}
+				mountsFiltered[MOUNT_GROUND] = {}
+				maxSpeeds[MOUNT_GROUND] = thisSpeed
+			end
+			if( (thisType == MOUNT_FLYING or thisType == MOUNT_FLYING) and thisSpeed > maxSpeeds[MOUNT_FLYING] ) then
+				mounts[MOUNT_FLYING] = {}
+				mountsFiltered[MOUNT_FLYING] = {}
+				maxSpeeds[MOUNT_FLYING] = thisSpeed
+			end
+	
+			
+			-- Add this mount to our list, only if it's at least as fast
+			-- as the fastest mount seen. (which may be this very mount)
+			if( (thisType == MOUNT_GROUND or thisType == MOUNT_BOTH) and thisSpeed >= maxSpeeds[MOUNT_GROUND] ) then
+				-- Add the mount to the list.
+				mounts[MOUNT_GROUND][spellID] = {cID=i,name=name}
+				
+				-- Add the mount if:
+				-- self.chardb is nil (no saved vars, new install)
+				-- it's in self.chardb
+				-- we're NOT logging in and it's NOT in self.mounts
+				if( (not self.chardb or not self.chardb[MOUNT_GROUND] or self.chardb[MOUNT_GROUND][spellID]) or (not login and not self.mounts[MOUNT_GROUND][spellID]) ) then
+					chardb[MOUNT_GROUND][spellID] = 1
+					mountsFiltered[MOUNT_GROUND][#mountsFiltered[MOUNT_GROUND]+1] = mounts[MOUNT_GROUND][spellID]
+					mounts[MOUNT_GROUND][spellID].enabled = 1
+				end
+			end
+			if( (thisType == MOUNT_FLYING or thisType == MOUNT_FLYING) and thisSpeed >= maxSpeeds[MOUNT_FLYING] ) then
+				-- Add the mount to the list.
+				mounts[MOUNT_FLYING][spellID] = {cID=i,name=name}
+				
+				-- Add the mount if:
+				-- self.chardb is nil (no saved vars, new install)
+				-- it's in self.chardb
+				-- we're NOT logging in and it's NOT in self.mounts
+				if( (not self.chardb or not self.chardb[MOUNT_FLYING] or self.chardb[MOUNT_FLYING][spellID]) or (not login and not self.mounts[MOUNT_FLYING][spellID]) ) then
+					chardb[MOUNT_FLYING][spellID] = 1
+					mountsFiltered[MOUNT_FLYING][#mountsFiltered[MOUNT_FLYING]+1] = mounts[MOUNT_FLYING][spellID]
+					mounts[MOUNT_FLYING][spellID].enabled = 1
+				end
 			end
 		end
 	end -- for i=1,maxMounts
@@ -375,10 +383,10 @@ function StableBoy:IsFlyableArea()
 	-- We ARE NOT in Lake Wintergrasp, are we in Dalaran?
 	if( not (zone == L.Dalaran) ) then return true end;
 	
-	-- We ARE in Dalaran, are we in Krasus' Landing?	
-	if( not (subzone == L.KrasusLanding) ) then return false end;
+	-- We ARE in Dalaran, are we in Krasus' Landing or The Underbelly?
+	if( not (subzone == L.KrasusLanding or subzone == L.TheUnderbelly) ) then return false end;
 	
-	-- We ARE in Krasus' Landing, we can fly.
+	-- We ARE in Krasus' Landing or The Underbelly, we can fly.
 	return true;
 end
 
