@@ -4,6 +4,7 @@ local BL,BC,BR = "BOTTOMLEFT", "BOTTOM", "BOTTOMRIGHT"
 
 local MOUNT_GROUND = 1
 local MOUNT_FLYING = 2
+local MOUNT_BOTH = 3
 
 local SPEED_ADAPTS = 0 -- This mount adaps to the fastest speed known for its type.
 local SPEED_SLOW = 1 -- 60% (Ground/Flying)
@@ -24,6 +25,7 @@ end
 local mountBypass = {
 	[54729] = { mountType=MOUNT_FLYING, speed=SPEED_ADAPTS }, -- Winged Steed of the Ebon Blade
 	[58983] = { mountType=MOUNT_GROUND, speed=SPEED_ADAPTS }, -- Big Blizzard Bear (BlizzCon 2008)
+	[48025] = { mountType=MOUNT_BOTH, speed=SPEED_ADAPTS }, -- Headless Horseman's Mount (Hallow's End Festival)
 }
 
 StableBoy = CreateFrame("frame", "StableBoyFrame", UIParent)
@@ -165,7 +167,10 @@ function StableBoy:ParseMounts(login)
 		[MOUNT_FLYING] = SPEED_SLOW, 
 		[MOUNT_GROUND] = SPEED_SLOW
 	}
-	chardb = {}
+	chardb = {
+		[MOUNT_FLYING] = {},
+		[MOUNT_GROUND] = {},
+	}
 	
 	local maxMounts = GetNumCompanions('MOUNT')
 	for i=1,maxMounts do
@@ -208,30 +213,55 @@ function StableBoy:ParseMounts(login)
 		end
 
 		-- Add Mount to LDB Menu
-		submenus[thisType][i] = {text=name,value=i}
+		if( thisType == MOUNT_BOTH ) then
+			submenus[MOUNT_FLYING][i] = {text=name,value=i}
+			submenus[MOUNT_GROUND][i] = {text=name,value=i}
+		else
+			submenus[thisType][i] = {text=name,value=i}
+		end
 		
 		-- If this mount is faster than anything seen yet, 
 		-- wipe out the mount list, and set our max speed to this mount's speed
-		if( thisSpeed > maxSpeeds[thisType] ) then
-			mounts[thisType] = {}
-			mountsFiltered[thisType] = {}
-			maxSpeeds[thisType] = thisSpeed
+		if( (thisType == MOUNT_GROUND or thisType == MOUNT_BOTH) and thisSpeed > maxSpeeds[MOUNT_GROUND] ) then
+			mounts[MOUNT_GROUND] = {}
+			mountsFiltered[MOUNT_GROUND] = {}
+			maxSpeeds[MOUNT_GROUND] = thisSpeed
+		end
+		if( (thisType == MOUNT_FLYING or thisType == MOUNT_FLYING) and thisSpeed > maxSpeeds[MOUNT_FLYING] ) then
+			mounts[MOUNT_FLYING] = {}
+			mountsFiltered[MOUNT_FLYING] = {}
+			maxSpeeds[MOUNT_FLYING] = thisSpeed
 		end
 
+		
 		-- Add this mount to our list, only if it's at least as fast
 		-- as the fastest mount seen. (which may be this very mount)
-		if( thisSpeed >= maxSpeeds[thisType] ) then
+		if( (thisType == MOUNT_GROUND or thisType == MOUNT_BOTH) and thisSpeed >= maxSpeeds[MOUNT_GROUND] ) then
 			-- Add the mount to the list.
-			mounts[thisType][spellID] = {cID=i,name=name}
+			mounts[MOUNT_GROUND][spellID] = {cID=i,name=name}
 			
 			-- Add the mount if:
 			-- self.chardb is nil (no saved vars, new install)
 			-- it's in self.chardb
 			-- we're NOT logging in and it's NOT in self.mounts
-			if( (not self.chardb or self.chardb[spellID]) or (not login and not self.mounts[thisType][spellID]) ) then
-				chardb[spellID] = 1
-				mountsFiltered[thisType][#mountsFiltered[thisType]+1] = mounts[thisType][spellID]
-				mounts[thisType][spellID].enabled = 1
+			if( (not self.chardb or not self.chardb[MOUNT_GROUND] or self.chardb[MOUNT_GROUND][spellID]) or (not login and not self.mounts[MOUNT_GROUND][spellID]) ) then
+				chardb[MOUNT_GROUND][spellID] = 1
+				mountsFiltered[MOUNT_GROUND][#mountsFiltered[MOUNT_GROUND]+1] = mounts[MOUNT_GROUND][spellID]
+				mounts[MOUNT_GROUND][spellID].enabled = 1
+			end
+		end
+		if( (thisType == MOUNT_FLYING or thisType == MOUNT_FLYING) and thisSpeed >= maxSpeeds[MOUNT_FLYING] ) then
+			-- Add the mount to the list.
+			mounts[MOUNT_FLYING][spellID] = {cID=i,name=name}
+			
+			-- Add the mount if:
+			-- self.chardb is nil (no saved vars, new install)
+			-- it's in self.chardb
+			-- we're NOT logging in and it's NOT in self.mounts
+			if( (not self.chardb or not self.chardb[MOUNT_FLYING] or self.chardb[MOUNT_FLYING][spellID]) or (not login and not self.mounts[MOUNT_FLYING][spellID]) ) then
+				chardb[MOUNT_FLYING][spellID] = 1
+				mountsFiltered[MOUNT_FLYING][#mountsFiltered[MOUNT_FLYING]+1] = mounts[MOUNT_FLYING][spellID]
+				mounts[MOUNT_FLYING][spellID].enabled = 1
 			end
 		end
 	end -- for i=1,maxMounts
@@ -242,12 +272,23 @@ function StableBoy:ParseMounts(login)
 	-- So we should always add them.
 	for spellID,info in pairs(mountBypass) do
 		if( info.addLater ) then
-			mounts[info.mountType][spellID] = {cID=info.cID,name=info.name}
-			
-			if( (not self.chardb or self.chardb[spellID]) or (not login and not self.mounts[info.mountType][spellID]) ) then
-				chardb[spellID] = 1
-				mountsFiltered[info.mountType][#mountsFiltered[info.mountType]+1] = mounts[info.mountType][spellID]
-				mounts[info.mountType][spellID].enabled = 1
+			if( info.mountType == MOUNT_GROUND or info.mountType == MOUNT_BOTH ) then
+				mounts[MOUNT_GROUND][spellID] = {cID=info.cID,name=info.name}
+				
+				if( (not self.chardb or not self.chardb[MOUNT_GROUND] or self.chardb[MOUNT_GROUND][spellID]) or (not login and not self.mounts[MOUNT_GROUND][spellID]) ) then
+					chardb[MOUNT_GROUND][spellID] = 1
+					mountsFiltered[MOUNT_GROUND][#mountsFiltered[MOUNT_GROUND]+1] = mounts[MOUNT_GROUND][spellID]
+					mounts[MOUNT_GROUND][spellID].enabled = 1
+				end
+			end
+			if( info.mountType == MOUNT_FLYING or info.mountType == MOUNT_BOTH ) then
+				mounts[MOUNT_FLYING][spellID] = {cID=info.cID,name=info.name}
+				
+				if( (not self.chardb or not self.chardb[MOUNT_FLYING] or self.chardb[MOUNT_FLYING][spellID]) or (not login and not self.mounts[MOUNT_FLYING][spellID]) ) then
+					chardb[MOUNT_FLYING][spellID] = 1
+					mountsFiltered[MOUNT_FLYING][#mountsFiltered[MOUNT_FLYING]+1] = mounts[MOUNT_FLYING][spellID]
+					mounts[MOUNT_FLYING][spellID].enabled = 1
+				end
 			end
 		end
 	end
@@ -281,7 +322,7 @@ function StableBoy:RebuildFilteredMounts()
 	
 	for mountType, list in pairs(self.mounts) do
 		for spellID, info in pairs(list) do
-			if( self.chardb[spellID]) then
+			if( self.chardb[mountType][spellID]) then
 				mountsFiltered[mountType][#mountsFiltered[mountType]+1] = info
 			end
 		end
@@ -498,7 +539,7 @@ mounts[mountType] table.
 function StableBoy:Options_Okay(panel)
 	for mountType,list in pairs(self.mounts) do
 		for spellID,info in pairs(list) do
-			self.chardb[spellID] = info.enabled
+			self.chardb[mountType][spellID] = info.enabled
 		end
 	end
 	self:RebuildFilteredMounts()
@@ -515,7 +556,7 @@ nothing should have changed.
 function StableBoy:Options_Cancel(panel,...)
 	for mountType,list in pairs(self.mounts) do
 		for spellID,info in pairs(list) do
-			info.enabled = self.chardb[spellID]
+			info.enabled = self.chardb[mountType][spellID]
 		end
 	end
 end
@@ -527,7 +568,7 @@ enabled.
 function StableBoy:Options_Defaults(panel,...)
 	for spellID,info in pairs(self.mounts[panel.mountType]) do
 		info.enabled = 1
-		self.chardb[spellID] = 1
+		self.chardb[mountType][spellID] = 1
 	end
 	self:RebuildFilteredMounts()
 end
@@ -550,7 +591,7 @@ function StableBoy:Options_Update(mountType,...)
 			local button = self.options.panels[mountType].checkboxes[line]
 			
 			if( linePlusOffset <= #mountOrder ) then
-				getglobal(button:GetName()..'Text'):SetText(mounts[mountOrder[linePlusOffset]].name)
+				_G[button:GetName()..'Text']:SetText(mounts[mountOrder[linePlusOffset]].name)
 				button:SetChecked(mounts[mountOrder[linePlusOffset]].enabled)
 				button.spellID = mountOrder[linePlusOffset]
 				button:Show()
