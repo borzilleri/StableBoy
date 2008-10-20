@@ -8,13 +8,18 @@ if ( GetLocale() == "koKR" ) then
 	
 	L.Title = "마구간지기"
 	L.Prefix = "마구간지기: "
+	L.OptionsDescription = "체크된 탈 것은 무작위 탈 것 선택시 포함됩니다."
+	L.Apply = "적용"
+
 	L.FlyingMounts = "나는 탈것"
 	L.GroundMounts = "일반 탈것"
-	L.Outland = "아웃랜드"
-	L.Northrend = "노스렌드"
+
 	L.SpeedFast = "속도가 바람처럼"
 	L.SpeedMedium = "속도가 매우"
+
+	L.Outland = "아웃랜드"
+	L.Northrend = "노스렌드"
 	L.Dalaran = "달라란"
 	L.KrasusLanding = "크라서스 착륙장"
-	L.Wintergrasp = "겨울손아귀 호수"
+	L.Wintergrasp = "겨울손아귀 호수"	
 end
