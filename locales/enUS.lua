@@ -26,8 +26,6 @@ L.SpeedFast = "extremely%s+fast"
 L.SpeedMedium = "very%s+fast"
 
 -- Zone names
-L.Outland = 'Outland'
-L.Northrend = 'Northrend'
 L.Dalaran = "Dalaran"
 L.KrasusLanding = "Krasus' Landing"
 L.Wintergrasp = "Wintergrasp"

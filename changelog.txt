@@ -1,3 +1,6 @@
+1.3.2
+- Use returns from GetMapContinents() for retrieving the name of Northrend an Outland, so we no longer need to make those localized.
+
 1.3.1
 - Remove bindings.xml from TOC, because apprently it's not supposed to be there.
 - Add support for 'The Underbelly' subzone of Dalaran. NOTE: This is semi-inaccurate. Like Krasus' Landing, there are parts of "The Underbelly" that are flyable, and parts that are not. Because those parts are (typically) areas you're passing through between other sub-zones, I'll err on the side of calling it flyable.

@@ -14,6 +14,8 @@ local SPEED_FAST = 3 -- 310% (Flying)
 local MAX_CHECKBOXES_SHOWN = 15
 local CHECKBOX_VERTICAL_SIZE = 20
 
+local KALIMDOR,EASTERN_KINGDOMS,OUTLAND,NORTHREND = GetMapContinents()
+
 local L = STABLEBOY_LOCALE
 
 local function announce(msg)
@@ -204,7 +206,7 @@ function StableBoy:ParseMounts(login)
 			-- Determine if we're a flying mount.
 			-- Flying mounts can only be used in Outland or Northrend,
 			-- And say so on the tooltip.
-			if text:match(L.Outland) or text:match(L.Northrend) then
+			if text:match(OUTLAND) or text:match(NORTHREND) then
 				thisType = MOUNT_FLYING
 			end
 
