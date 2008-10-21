@@ -484,6 +484,12 @@ function StableBoy:OptionsFrameCreate()
 		local checkbox = self:CreateCheckButton(panel, "StableBoyGroundCheckBox"..i)
 		checkbox:SetPoint(TL, 10, verticalOffset)
 		checkbox:SetScript('OnClick', function(self,...) StableBoy:CheckBox_OnClick(self, MOUNT_GROUND, ...) end)
+		checkbox:SetScript('OnEnter', function(self,...)
+			GameTooltip:SetOwner(checkbox, 'ANCHOR_PRESERVE')
+			GameTooltip:SetHyperlink("spell:"..self.spellID)
+			GameTooltip:Show()
+		end)
+		checkbox:SetScript('OnLeave', function() GameTooltip:Hide() end)
 		panel.checkboxes[i] = checkbox
 	end
 	options.panels[MOUNT_GROUND] = panel
@@ -527,6 +533,12 @@ function StableBoy:OptionsFrameCreate()
 		local checkbox = self:CreateCheckButton(panel, "StableBoyFlyingCheckBox"..i)
 		checkbox:SetPoint(TL, 10, verticalOffset)
 		checkbox:SetScript('OnClick', function(self,...) StableBoy:CheckBox_OnClick(self, MOUNT_FLYING, ...) end)
+		checkbox:SetScript('OnEnter', function(self,...)
+			GameTooltip:SetOwner(checkbox, 'ANCHOR_PRESERVE')
+			GameTooltip:SetHyperlink("spell:"..self.spellID)
+			GameTooltip:Show()
+		end)
+		checkbox:SetScript('OnLeave', function() GameTooltip:Hide() end)
 		panel.checkboxes[i] = checkbox
 	end
 	options.panels[MOUNT_FLYING] = panel
