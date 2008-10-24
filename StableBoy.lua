@@ -122,9 +122,13 @@ function StableBoy:ADDON_LOADED(addon,...)
 		InterfaceOptions_AddCategory(self.options.panels[MOUNT_GROUND])
 		InterfaceOptions_AddCategory(self.options.panels[MOUNT_FLYING])
 
-		-- Slash Commands		
+		-- Slash Commands
 		SlashCmdList["StableBoyCOMMAND"] = function(cmd)
-			if( cmd == "ground" ) then
+			if( cmd == "mount" ) then
+				self:ClickHandler(false)
+			elseif( cmd == "mountGround" ) then
+				self:ClickHandler(true)
+			elseif( cmd == "ground" ) then
 				InterfaceOptionsFrame_OpenToCategory(L.GroundMounts)
 			elseif( cmd == "flying" ) then
 				InterfaceOptionsFrame_OpenToCategory(L.FlyingMounts)
