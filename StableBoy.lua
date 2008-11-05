@@ -132,6 +132,9 @@ function StableBoy:ADDON_LOADED(addon,...)
 				InterfaceOptionsFrame_OpenToCategory(L.GroundMounts)
 			elseif( cmd == "flying" ) then
 				InterfaceOptionsFrame_OpenToCategory(L.FlyingMounts)
+			elseif( cmd == "refresh" ) then
+				self:ParseMounts(true)
+				self:Options_Update()
 			else
 				InterfaceOptionsFrame_OpenToCategory(L.Title)
 			end
