@@ -14,8 +14,15 @@ BINDING_NAME_STABLEBOY_MOUNT_GROUND = 'Summon Ground Mount'
 -- Options & General strings
 L.Title = 'StableBoy'
 L.Prefix = 'StableBoy: '
-L.OptionsDescription = "Checked mounts will be used for random selection."
 L.Apply = "Apply"
+L.MountOptionsDescription = "Checked mounts will be used for random selection."
+L.OptionsDescription = "Enabling one of the tweaks below will flag that entire subzone as a flyable area."
+
+-- Tweaks
+L.DalaranKrasusLanding = "Krasus' Landing (Dalaran)"
+L.DalaranVioletCitadel = "Violet Citadel (Dalaran)"
+L.DalaranUnderbelly = "The Underbelly (Dalaran)"
+
 
 -- Mount types
 L.FlyingMounts = 'Flying Mounts'
@@ -31,3 +38,4 @@ L.KrasusLanding = "Krasus' Landing"
 L.Wintergrasp = "Wintergrasp"
 L.TheUnderbelly = "The Underbelly"
 L.TempleOfAhnQiraj = "Temple of Ahn'Qiraj"
+L.VioletCitadel = "The Violet Citadel"

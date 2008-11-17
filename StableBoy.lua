@@ -34,6 +34,12 @@ StableBoy = CreateFrame("frame", "StableBoyFrame", UIParent)
 StableBoy:SetScript("OnEvent", function(self, event, ...) return self[event](self, ...) end)
 StableBoy:RegisterEvent("ADDON_LOADED")
 
+local defaults = {
+	KrasusLanding = true,
+	VioletCitadel = true,
+	Underbelly = true,
+}
+
 -- This should be a -COMPLETE- list of our BEST Flying & Ground Mounts.
 -- This is what the options frame will use to generate its list of mounts for filtering.
 -- NOTE: The Key->Value pairs for these lists should be in the following format:
@@ -94,7 +100,12 @@ local menu = {
 function StableBoy:ADDON_LOADED(addon,...)
 	if( addon == 'StableBoy' ) then
 		-- db/SV Setup
-		self.chardb = StableBoyPCDB
+		self.chardb = StableBoyPCDB or {}
+		for k,v in pairs(defaults) do
+			if( self.chardb[k] == nil ) then
+				self.chardb[k] = v
+			end
+		end
 		
 		-- Register Events
 		self:RegisterEvent('PLAYER_LOGIN')
@@ -325,8 +336,10 @@ function StableBoy:ParseMounts(login)
 	self.mounts = mounts
 	self.mountsFiltered = mountsFiltered
 	self.mountOrder = mountOrder
-	StableBoyPCDB = chardb
-	self.chardb = chardb
+	StableBoyPCDB[MOUNT_GROUND] = chardb[MOUNT_GROUND]
+	StableBoyPCDB[MOUNT_FLYING] = chardb[MOUNT_FLYING]
+	self.chardb[MOUNT_GROUND] = chardb[MOUNT_GROUND]
+	self.chardb[MOUNT_FLYING] = chardb[MOUNT_FLYING]
 	menu[MOUNT_GROUND].submenu = submenus[MOUNT_GROUND]
 	menu[MOUNT_FLYING].submenu = submenus[MOUNT_FLYING]
 end
@@ -392,11 +405,13 @@ function StableBoy:IsFlyableArea()
 	-- We ARE NOT in Lake Wintergrasp, are we in Dalaran?
 	if( not (zone == L.Dalaran) ) then return true end;
 	
-	-- We ARE in Dalaran, are we in Krasus' Landing or The Underbelly?
-	if( not (subzone == L.KrasusLanding or subzone == L.TheUnderbelly) ) then return false end;
+	-- We ARE in Dalaran, check for various funky Subzones that (kind of) allow flying	
+	if( subzone == L.KrasusLanding and self.chardb.KrasusLanding ) then return true end;
+	if( subzone == L.TheUnderbelly and self.chardb.Underbelly ) then return true end;
+	if( subzone == L.VioletCitadel and self.chardb.VioletCitadel ) then return true end;
 	
-	-- We ARE in Krasus' Landing or The Underbelly, we can fly.
-	return true;
+	-- We're not in one of the above subzones, so we can't fly.
+	return false;
 end
 
 function StableBoy:LDB_OnClick(frame,button,down)
@@ -437,8 +452,12 @@ function StableBoy_InitializeMenu(frame,level)
 	end
 end
 
+-- Yes. This method is ugly, messy, and really really bad.
+-- There are SO many ways I could (and should) clean this up.
+-- Make it more LoD-ey
+-- break some of this stuff out into submethods for less redundent code.
 function StableBoy:OptionsFrameCreate()
-	local options,title,subtitle,panel
+	local options,title,subtitle,panel,checkbox
 
 	-- Setup the base panel
 	options = CreateFrame('Frame', 'StableBoyOptionsFrame', UIParent)
@@ -453,6 +472,39 @@ function StableBoy:OptionsFrameCreate()
 	title:SetPoint(TL, 16, -16)
 	title:SetText(L.Title)
 	options.title = title
+	
+	subtitle = options:CreateFontString(nil, "ARTWORK", "GameFontHighlightSmall")
+	subtitle:SetHeight(32)
+	subtitle:SetPoint(TL, title, BL, 0, -8)
+	subtitle:SetPoint(MR, options, -32, 0)
+	subtitle:SetNonSpaceWrap(true)
+	subtitle:SetJustifyH("LEFT")
+	subtitle:SetJustifyV("TOP")
+	subtitle:SetText(L.OptionsDescription)
+	options.subtitle = subtitle
+	
+	-- Tweaks
+	-- Krasus' Landing
+	checkbox = self:CreateCheckButton(options, "StableBoyKrasusLandingCheckBox")
+	checkbox:SetPoint(TL, 10, -60)
+	_G[checkbox:GetName()..'Text']:SetText(L.DalaranKrasusLanding)
+	checkbox:SetChecked(self.chardb.KrasusLanding)
+	options.KrasusLandingTweak = checkbox
+
+	-- The Violet Citadel
+	checkbox = self:CreateCheckButton(options, "StableBoyVioletCitadelCheckBox")
+	checkbox:SetPoint(TL, 10, -(60+CHECKBOX_VERTICAL_SIZE))
+	_G[checkbox:GetName()..'Text']:SetText(L.DalaranVioletCitadel)
+	checkbox:SetChecked(self.chardb.VioletCitadel)
+	options.VioletCitadelTweak = checkbox
+
+	-- The Underbelly
+	checkbox = self:CreateCheckButton(options, "StableBoyUnderbellyCheckBox")
+	checkbox:SetPoint(TL, 10, -(60+CHECKBOX_VERTICAL_SIZE*2))
+	_G[checkbox:GetName()..'Text']:SetText(L.DalaranUnderbelly)
+	checkbox:SetChecked(self.chardb.Underbelly)
+	options.UnderbellyTweak = checkbox
+	
 	
 	-- Setup the ground mount panel
 	panel = CreateFrame('Frame', 'StableBoyOptionsGroundFrame', UIParent)
@@ -474,7 +526,7 @@ function StableBoy:OptionsFrameCreate()
 	subtitle:SetNonSpaceWrap(true)
 	subtitle:SetJustifyH("LEFT")
 	subtitle:SetJustifyV("TOP")
-	subtitle:SetText(L.OptionsDescription)
+	subtitle:SetText(L.MountOptionsDescription)
 	panel.subtitle = subtitle
 
 	panel.apply = self:CreateButton(panel, L.Apply, 96, 22)
@@ -523,7 +575,7 @@ function StableBoy:OptionsFrameCreate()
 	subtitle:SetNonSpaceWrap(true)
 	subtitle:SetJustifyH("LEFT")
 	subtitle:SetJustifyV("TOP")
-	subtitle:SetText(L.OptionsDescription)
+	subtitle:SetText(L.MountOptionsDescription)
 	panel.subtitle = subtitle
 
 	panel.apply = self:CreateButton(panel, L.Apply, 96, 22)
@@ -566,6 +618,10 @@ The user's selections should be represented by the "enabled" variable in the
 mounts[mountType] table.
 ]]--
 function StableBoy:Options_Okay(panel)
+	self.chardb.KrasusLanding = self.options.KrasusLandingTweak:GetChecked() and true or false;
+	self.chardb.VioletCitadel = self.options.VioletCitadelTweak:GetChecked() and true or false;
+	self.chardb.Underbelly = self.options.UnderbellyTweak:GetChecked() and true or false;
+
 	for mountType,list in pairs(self.mounts) do
 		for spellID,info in pairs(list) do
 			self.chardb[mountType][spellID] = info.enabled
@@ -583,6 +639,10 @@ NOTE: We should NOT have to rebuild our filtered mounts list here, because
 nothing should have changed.
 ]]--
 function StableBoy:Options_Cancel(panel,...)
+	self.options.KrasusLandingTweak:SetChecked(self.chardb.KrasusLanding)
+	self.options.VioletCitadelTweak:SetChecked(self.chardb.VioletCitadel)
+	self.options.UnderbellyTweak:SetChecked(self.chardb.Underbelly)
+
 	for mountType,list in pairs(self.mounts) do
 		for spellID,info in pairs(list) do
 			info.enabled = self.chardb[mountType][spellID]
@@ -595,6 +655,14 @@ The user hit "Defaults", so we return to our default state, which is every mount
 enabled.
 ]]--
 function StableBoy:Options_Defaults(panel,...)
+	self.chardb.KrasusLanding = defaults.KrasusLanding
+	self.chardb.VioletCitadel = defaults.VioletCitadel
+	self.chardb.Underbelly = defaults.Underbelly
+
+	self.options.KrasusLandingTweak:SetChecked(defaults.KrasusLanding)
+	self.options.VioletCitadelTweak:SetChecked(defaults.VioletCitadel)
+	self.options.UnderbellyTweak:SetChecked(defaults.Underbelly)
+
 	for spellID,info in pairs(self.mounts[panel.mountType]) do
 		info.enabled = 1
 		self.chardb[mountType][spellID] = 1

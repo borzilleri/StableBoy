@@ -8,7 +8,7 @@ if ( GetLocale() == "koKR" ) then
 	
 	L.Title = "마구간지기"
 	L.Prefix = "마구간지기: "
-	L.OptionsDescription = "체크된 탈 것은 무작위 탈 것 선택시 포함됩니다."
+	L.MountOptionsDescription = "체크된 탈 것은 무작위 탈 것 선택시 포함됩니다."
 	L.Apply = "적용"
 
 	L.FlyingMounts = "나는 탈것"

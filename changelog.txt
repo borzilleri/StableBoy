@@ -1,3 +1,7 @@
+1.4
+- Add a tweak for 'The Violet Citadel' subzone of dalaran. Apparently the balcony outside The Purple Parlor is part of this subzone AND is actually flyable. I'd say blizzard would drive me to drink, but I do already...
+- Added toggleable options for each of the subzone tweaks. You can now turn each subzone tweak on or off in the options window.
+
 1.3.2
 - Use returns from GetMapContinents() for retrieving the name of Northrend an Outland, so we no longer need to make those localized.
 
