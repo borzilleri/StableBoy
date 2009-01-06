@@ -1,3 +1,6 @@
+1.4.1
+- Pass the correct parameters to LibDataBroker when creating the LDB object.
+
 1.4
 - Add a tweak for 'The Violet Citadel' subzone of dalaran. Apparently the balcony outside The Purple Parlor is part of this subzone AND is actually flyable. I'd say blizzard would drive me to drink, but I do already...
 - Added toggleable options for each of the subzone tweaks. You can now turn each subzone tweak on or off in the options window.

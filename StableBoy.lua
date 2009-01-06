@@ -117,13 +117,15 @@ function StableBoy:ADDON_LOADED(addon,...)
 		self.frame:SetScript("OnClick", function(...) StableBoy:ClickHandler(IsShiftKeyDown()) end)
 		
 		-- Setup LDB plugin
-		self.ldb = LibStub:GetLibrary("LibDataBroker-1.1"):NewDataObject("StableBoyLDB", {label=L.Title,text=""})
-		self.ldb.icon = "Interface\\Icons\\Spell_Holy_CrusaderAura"
-		self.ldb.OnClick = function(...) StableBoy:LDB_OnClick(...) end
+		self.ldb = LibStub:GetLibrary("LibDataBroker-1.1"):NewDataObject("StableBoyLDB", {
+			type="launcher",
+			icon="Interface\\Icons\\Spell_Holy_CrusaderAura",
+			OnClick=function(...) StableBoy:LDB_OnClick(...) end,
+			label=L.Title,
+		})
 		
 		-- Setup Menu
 		self.menu = CreateFrame("Frame", "StableBoyDropDownMenu", UIParent, "UIDropDownMenuTemplate")
---		StableBoyDropDownMenu:SetPoint("CENTER", UIParent)
 		UIDropDownMenu_Initialize(self.menu, StableBoy_InitializeMenu, "MENU")
 		
 		-- Interface Options
@@ -425,7 +427,17 @@ function StableBoy:LDB_OnClick(frame,button,down)
 end
 
 function StableBoy:Menu_OnClick()
-	CallCompanion("MOUNT",this.value)
+	local creatureID,name,spellID = GetCompanionInfo('MOUNT',this.value)
+	local link = "|cff71d5ff|Hspell:"..spellID.."|h["..name.."]|h|r"
+	
+	if( IsModifiedClick() ) then
+		if (not ChatEdit_InsertLink(link) ) then
+			ChatFrameEditBox:Show();
+			ChatEdit_InsertLink(link);
+		end
+	else
+		CallCompanion("MOUNT",this.value)
+	end
 end
 
 function StableBoy_InitializeMenu(frame,level)
