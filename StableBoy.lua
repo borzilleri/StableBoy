@@ -100,7 +100,8 @@ local menu = {
 function StableBoy:ADDON_LOADED(addon,...)
 	if( addon == 'StableBoy' ) then
 		-- db/SV Setup
-		self.chardb = StableBoyPCDB or {}
+		StableBoyPCDB = StableBoyPCDB or {}
+		self.chardb = StableBoyPCDB
 		for k,v in pairs(defaults) do
 			if( self.chardb[k] == nil ) then
 				self.chardb[k] = v
