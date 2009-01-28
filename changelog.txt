@@ -1,3 +1,6 @@
+1.4.2
+- Hopefully fix a bug with initialization of SVs
+
 1.4.1
 - Pass the correct parameters to LibDataBroker when creating the LDB object.
 

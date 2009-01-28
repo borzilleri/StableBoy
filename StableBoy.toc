@@ -5,9 +5,8 @@
 ## Author: NightHawk The Sane
 ## X-eMail: nighthawkthesane@gmail.com
 ## Interface: 30000
-## Version: 1.4.1
+## Version: 1.4.2
 ## SavedVariablesPerCharacter: StableBoyPCDB
-
 
 libs\LibStub.lua
 libs\CallbackHandler-1.0.lua
