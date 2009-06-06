@@ -1,3 +1,6 @@
+1.4.3
+- Add a button to the interface options panel to let you refresh the mount list, use this after a patch to properly reparse your mounts.
+
 1.4.2
 - Hopefully fix a bug with initialization of SVs
 

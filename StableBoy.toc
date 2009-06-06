@@ -4,8 +4,8 @@
 ## Notes-koKR: 최적의 탈것을 단축키를 이용해 자동으로 선택해줍니다.
 ## Author: NightHawk The Sane
 ## X-eMail: nighthawkthesane@gmail.com
-## Interface: 30000
-## Version: 1.4.2
+## Interface: 30100
+## Version: 1.4.3
 ## SavedVariablesPerCharacter: StableBoyPCDB
 
 libs\LibStub.lua

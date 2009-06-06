@@ -14,7 +14,8 @@ BINDING_NAME_STABLEBOY_MOUNT_GROUND = 'Summon Ground Mount'
 -- Options & General strings
 L.Title = 'StableBoy'
 L.Prefix = 'StableBoy: '
-L.Apply = "Apply"
+L.Apply = 'Apply'
+L.Refresh = 'Refresh Mounts'
 L.MountOptionsDescription = "Checked mounts will be used for random selection."
 L.OptionsDescription = "Enabling one of the tweaks below will flag that entire subzone as a flyable area."
 

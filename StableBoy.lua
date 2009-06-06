@@ -6,7 +6,7 @@ local MOUNT_GROUND = 1
 local MOUNT_FLYING = 2
 local MOUNT_BOTH = 3
 
-local SPEED_ADAPTS = 0 -- This mount adaps to the fastest speed known for its type.
+local SPEED_ADAPTS = 0 -- This mount adapts to the fastest speed known for its type.
 local SPEED_SLOW = 1 -- 60% (Ground/Flying)
 local SPEED_MEDIUM = 2 -- 100% (Ground) / 280% (Flying)
 local SPEED_FAST = 3 -- 310% (Flying)
@@ -147,8 +147,9 @@ function StableBoy:ADDON_LOADED(addon,...)
 			elseif( cmd == "flying" ) then
 				InterfaceOptionsFrame_OpenToCategory(L.FlyingMounts)
 			elseif( cmd == "refresh" ) then
-				self:ParseMounts(true)
-				self:Options_Update()
+			  self:Options_Refresh();
+--				self:ParseMounts(true)
+--				self:Options_Update()
 			else
 				InterfaceOptionsFrame_OpenToCategory(L.Title)
 			end
@@ -518,6 +519,10 @@ function StableBoy:OptionsFrameCreate()
 	checkbox:SetChecked(self.chardb.Underbelly)
 	options.UnderbellyTweak = checkbox
 	
+	-- Refresh Mounts Button
+	options.refresh = self:CreateButton(options, L.Refresh, 120, 22)
+	options.refresh:SetPoint(BR, -16, 16)
+	options.refresh:SetScript('OnClick', function(self,...) StableBoy:Options_Refresh() end)
 	
 	-- Setup the ground mount panel
 	panel = CreateFrame('Frame', 'StableBoyOptionsGroundFrame', UIParent)
@@ -710,4 +715,9 @@ function StableBoy:Options_Update(mountType,...)
 			end
 		end
 	end
+end
+
+function StableBoy:Options_Refresh()
+  self:PLAYER_LOGIN()
+  announce('Mounts re-parsed.')
 end
