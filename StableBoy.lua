@@ -28,6 +28,7 @@ local mountBypass = {
 	[54729] = { mountType=MOUNT_FLYING, speed=SPEED_ADAPTS }, -- Winged Steed of the Ebon Blade
 	[58983] = { mountType=MOUNT_GROUND, speed=SPEED_ADAPTS }, -- Big Blizzard Bear (BlizzCon 2008)
 	[48025] = { mountType=MOUNT_BOTH, speed=SPEED_ADAPTS }, -- Headless Horseman's Mount (Hallow's End Festival)
+	[60024] = { mountType=MOUNT_FLYING, speed=SPEED_FAST }, -- Violet Proto-Drake (parses as 280, but is actualy 310)
 }
 
 StableBoy = CreateFrame("frame", "StableBoyFrame", UIParent)
@@ -392,30 +393,22 @@ end
 function StableBoy:IsFlyableArea()
 	SetMapToCurrentZone()
 	local zone = GetRealZoneText()
-	local subzone = GetSubZoneText()
+	--local subzone = GetSubZoneText()
 
 	-- Are we in a 'Flyable' area?
 	if( not IsFlyableArea() ) then return false end;
 	
 	-- We ARE in a 'Flyable' area, are we in Northrend?
 	if( GetCurrentMapContinent() ~= 4 ) then return true end;
-
-	-- We ARE in Northrend, do we have Cold Weather Flying (spell ID 54197)?
-	if( not GetSpellInfo(GetSpellInfo(54197)) ) then return false end;
 	
 	-- We HAVE Cold Weather Flying, are we in Lake Wintergrasp?
-	if( zone == L.Wintergrasp ) then return false end;
-
-	-- We ARE NOT in Lake Wintergrasp, are we in Dalaran?
-	if( not (zone == L.Dalaran) ) then return true end;
+	if( zone ~= L.Wintergrasp ) then return true end;
 	
-	-- We ARE in Dalaran, check for various funky Subzones that (kind of) allow flying	
-	if( subzone == L.KrasusLanding and self.chardb.KrasusLanding ) then return true end;
-	if( subzone == L.TheUnderbelly and self.chardb.Underbelly ) then return true end;
-	if( subzone == L.VioletCitadel and self.chardb.VioletCitadel ) then return true end;
+	-- We ARE in Lake Wintergrasp, is it currently contested?
+	if( nil == GetWintergraspWaitTime() ) then return false end;
 	
-	-- We're not in one of the above subzones, so we can't fly.
-	return false;
+	-- It's not contested, so we can fly.
+	return true;
 end
 
 function StableBoy:LDB_OnClick(frame,button,down)
@@ -486,7 +479,8 @@ function StableBoy:OptionsFrameCreate()
 	title:SetPoint(TL, 16, -16)
 	title:SetText(L.Title)
 	options.title = title
-	
+
+ --[[	
 	subtitle = options:CreateFontString(nil, "ARTWORK", "GameFontHighlightSmall")
 	subtitle:SetHeight(32)
 	subtitle:SetPoint(TL, title, BL, 0, -8)
@@ -498,6 +492,7 @@ function StableBoy:OptionsFrameCreate()
 	options.subtitle = subtitle
 	
 	-- Tweaks
+	-- As of 3.2, these are no longer necessary.
 	-- Krasus' Landing
 	checkbox = self:CreateCheckButton(options, "StableBoyKrasusLandingCheckBox")
 	checkbox:SetPoint(TL, 10, -60)
@@ -518,6 +513,7 @@ function StableBoy:OptionsFrameCreate()
 	_G[checkbox:GetName()..'Text']:SetText(L.DalaranUnderbelly)
 	checkbox:SetChecked(self.chardb.Underbelly)
 	options.UnderbellyTweak = checkbox
+	]]
 	
 	-- Refresh Mounts Button
 	options.refresh = self:CreateButton(options, L.Refresh, 120, 22)
