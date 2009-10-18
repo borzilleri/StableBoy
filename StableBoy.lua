@@ -36,9 +36,9 @@ StableBoy:SetScript("OnEvent", function(self, event, ...) return self[event](sel
 StableBoy:RegisterEvent("ADDON_LOADED")
 
 local defaults = {
-	KrasusLanding = true,
-	VioletCitadel = true,
-	Underbelly = true,
+	--KrasusLanding = true,
+	--VioletCitadel = true,
+	--Underbelly = true,
 }
 
 -- This should be a -COMPLETE- list of our BEST Flying & Ground Mounts.
@@ -110,8 +110,9 @@ function StableBoy:ADDON_LOADED(addon,...)
 		end
 		
 		-- Register Events
-		self:RegisterEvent('PLAYER_LOGIN')
+		--self:RegisterEvent('PLAYER_LOGIN')
 		self:RegisterEvent('COMPANION_LEARNED')
+		self:RegisterEvent('COMPANION_UPDATE')
 		
 		-- Set Scripts
 		self.frame = CreateFrame("Button", "StableBoyClickFrame", UIParent)
@@ -167,6 +168,15 @@ end
 function StableBoy:COMPANION_LEARNED(...)
 	self:ParseMounts(false)
 	self:Options_Update()
+end
+
+function StableBoy:COMPANION_UPDATE(event, ctype, tmp)
+	if( ctype == nil ) then
+		--announce("COMPANION_UPDATE!")
+		self:ParseMounts(true)
+		self:OptionsUpdate()
+		self:UnregisterEvent('COMPANION_UPDATE')
+	end
 end
 
 function StableBoy:ParseMounts(login)
