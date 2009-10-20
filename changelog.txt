@@ -1,3 +1,8 @@
+1.5.0
+- Updated for 3.2
+- Updated the IsFlyableArea method for changes to 3.2, most of the processing it used to do is handled correctly in game, but it now handles WG properly.
+- Add an override for the Violet Proto drake, as its actually 310%
+
 1.4.3
 - Add a button to the interface options panel to let you refresh the mount list, use this after a patch to properly reparse your mounts.
 
