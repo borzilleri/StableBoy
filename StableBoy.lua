@@ -639,9 +639,9 @@ The user's selections should be represented by the "enabled" variable in the
 mounts[mountType] table.
 ]]--
 function StableBoy:Options_Okay(panel)
-	self.chardb.KrasusLanding = self.options.KrasusLandingTweak:GetChecked() and true or false;
-	self.chardb.VioletCitadel = self.options.VioletCitadelTweak:GetChecked() and true or false;
-	self.chardb.Underbelly = self.options.UnderbellyTweak:GetChecked() and true or false;
+	--self.chardb.KrasusLanding = self.options.KrasusLandingTweak:GetChecked() and true or false;
+	--self.chardb.VioletCitadel = self.options.VioletCitadelTweak:GetChecked() and true or false;
+	--self.chardb.Underbelly = self.options.UnderbellyTweak:GetChecked() and true or false;
 
 	for mountType,list in pairs(self.mounts) do
 		for spellID,info in pairs(list) do
@@ -660,9 +660,9 @@ NOTE: We should NOT have to rebuild our filtered mounts list here, because
 nothing should have changed.
 ]]--
 function StableBoy:Options_Cancel(panel,...)
-	self.options.KrasusLandingTweak:SetChecked(self.chardb.KrasusLanding)
-	self.options.VioletCitadelTweak:SetChecked(self.chardb.VioletCitadel)
-	self.options.UnderbellyTweak:SetChecked(self.chardb.Underbelly)
+	--self.options.KrasusLandingTweak:SetChecked(self.chardb.KrasusLanding)
+	--self.options.VioletCitadelTweak:SetChecked(self.chardb.VioletCitadel)
+	--self.options.UnderbellyTweak:SetChecked(self.chardb.Underbelly)
 
 	for mountType,list in pairs(self.mounts) do
 		for spellID,info in pairs(list) do
@@ -676,13 +676,13 @@ The user hit "Defaults", so we return to our default state, which is every mount
 enabled.
 ]]--
 function StableBoy:Options_Defaults(panel,...)
-	self.chardb.KrasusLanding = defaults.KrasusLanding
-	self.chardb.VioletCitadel = defaults.VioletCitadel
-	self.chardb.Underbelly = defaults.Underbelly
+	--self.chardb.KrasusLanding = defaults.KrasusLanding
+	--self.chardb.VioletCitadel = defaults.VioletCitadel
+	--self.chardb.Underbelly = defaults.Underbelly
 
-	self.options.KrasusLandingTweak:SetChecked(defaults.KrasusLanding)
-	self.options.VioletCitadelTweak:SetChecked(defaults.VioletCitadel)
-	self.options.UnderbellyTweak:SetChecked(defaults.Underbelly)
+	--self.options.KrasusLandingTweak:SetChecked(defaults.KrasusLanding)
+	--self.options.VioletCitadelTweak:SetChecked(defaults.VioletCitadel)
+	--self.options.UnderbellyTweak:SetChecked(defaults.Underbelly)
 
 	for spellID,info in pairs(self.mounts[panel.mountType]) do
 		info.enabled = 1
