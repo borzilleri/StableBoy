@@ -110,9 +110,9 @@ function StableBoy:ADDON_LOADED(addon,...)
 		end
 		
 		-- Register Events
-		--self:RegisterEvent('PLAYER_LOGIN')
+		self:RegisterEvent('PLAYER_LOGIN')
 		self:RegisterEvent('COMPANION_LEARNED')
-		self:RegisterEvent('COMPANION_UPDATE')
+		--self:RegisterEvent('COMPANION_UPDATE')
 		
 		-- Set Scripts
 		self.frame = CreateFrame("Button", "StableBoyClickFrame", UIParent)
@@ -162,19 +162,15 @@ end
 
 function StableBoy:PLAYER_LOGIN(...)
 	self:ParseMounts(true)
-	self:Options_Update()
 end
 
 function StableBoy:COMPANION_LEARNED(...)
 	self:ParseMounts(false)
-	self:Options_Update()
 end
 
 function StableBoy:COMPANION_UPDATE(event, ctype, tmp)
 	if( ctype == nil ) then
-		--announce("COMPANION_UPDATE!")
 		self:ParseMounts(true)
-		self:OptionsUpdate()
 		self:UnregisterEvent('COMPANION_UPDATE')
 	end
 end
@@ -357,6 +353,7 @@ function StableBoy:ParseMounts(login)
 	self.chardb[MOUNT_FLYING] = chardb[MOUNT_FLYING]
 	menu[MOUNT_GROUND].submenu = submenus[MOUNT_GROUND]
 	menu[MOUNT_FLYING].submenu = submenus[MOUNT_FLYING]
+	self:Options_Update()
 end
 
 function StableBoy:RebuildFilteredMounts()
@@ -724,6 +721,6 @@ function StableBoy:Options_Update(mountType,...)
 end
 
 function StableBoy:Options_Refresh()
-  self:PLAYER_LOGIN()
+	self:ParseMounts(true)
   announce('Mounts re-parsed.')
 end
