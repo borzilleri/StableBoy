@@ -19,6 +19,9 @@ L.Refresh = 'Refresh Mounts'
 L.MountOptionsDescription = "Checked mounts will be used for random selection."
 L.OptionsDescription = "Enabling one of the tweaks below will flag that entire subzone as a flyable area."
 
+L.MergeFastOption = "Merge flying mounts"
+L.MergeFastOptionDescription = "Merges fast (310%) flying mounts into medium (280%) flying mounts."
+
 -- Tweaks
 L.DalaranKrasusLanding = "Krasus' Landing (Dalaran)"
 L.DalaranVioletCitadel = "Violet Citadel (Dalaran)"

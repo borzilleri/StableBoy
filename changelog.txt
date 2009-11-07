@@ -1,3 +1,6 @@
+1.6
+- Add an option "Merge flying mounts", when checked, this will combine your 310% mounts into your 280% mounts.
+
 1.5.1
 - Fix a bug where several options methods were looking for settings that no longer existed
 

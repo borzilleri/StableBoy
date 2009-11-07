@@ -11,6 +11,9 @@ local SPEED_SLOW = 1 -- 60% (Ground/Flying)
 local SPEED_MEDIUM = 2 -- 100% (Ground) / 280% (Flying)
 local SPEED_FAST = 3 -- 310% (Flying)
 
+
+local CONST_SPEED_FAST = SPEED_FAST
+
 local MAX_CHECKBOXES_SHOWN = 15
 local CHECKBOX_VERTICAL_SIZE = 20
 
@@ -36,6 +39,7 @@ StableBoy:SetScript("OnEvent", function(self, event, ...) return self[event](sel
 StableBoy:RegisterEvent("ADDON_LOADED")
 
 local defaults = {
+	mergeFast = false,
 	--KrasusLanding = true,
 	--VioletCitadel = true,
 	--Underbelly = true,
@@ -176,6 +180,9 @@ function StableBoy:COMPANION_UPDATE(event, ctype, tmp)
 end
 
 function StableBoy:ParseMounts(login)
+	-- Adjust our "fast" value depending on if we're merging in fast mounts or not
+	SPEED_FAST = self.chardb.mergeFast and SPEED_MEDIUM or CONST_SPEED_FAST
+	
 	GameTooltip_SetDefaultAnchor(StableBoyTooltip, UIParent)
 	
 	local mounts = {
@@ -218,6 +225,7 @@ function StableBoy:ParseMounts(login)
 			else
 				thisType = mountBypass[spellID].mountType
 				thisSpeed = mountBypass[spellID].speed
+				thisSpeed = (thisSpeed==CONST_SPEED_FAST and self.chardb.mergeFast) and SPEED_MEDIUM or thisSpeed
 			end
 		else
 			StableBoyTooltip:SetHyperlink("spell:"..spellID)
@@ -265,7 +273,7 @@ function StableBoy:ParseMounts(login)
 				mountsFiltered[MOUNT_GROUND] = {}
 				maxSpeeds[MOUNT_GROUND] = thisSpeed
 			end
-			if( (thisType == MOUNT_FLYING or thisType == MOUNT_FLYING) and thisSpeed > maxSpeeds[MOUNT_FLYING] ) then
+			if( (thisType == MOUNT_FLYING or thisType == MOUNT_BOTH) and thisSpeed > maxSpeeds[MOUNT_FLYING] ) then
 				mounts[MOUNT_FLYING] = {}
 				mountsFiltered[MOUNT_FLYING] = {}
 				maxSpeeds[MOUNT_FLYING] = thisSpeed
@@ -288,7 +296,7 @@ function StableBoy:ParseMounts(login)
 					mounts[MOUNT_GROUND][spellID].enabled = 1
 				end
 			end
-			if( (thisType == MOUNT_FLYING or thisType == MOUNT_FLYING) and thisSpeed >= maxSpeeds[MOUNT_FLYING] ) then
+			if( (thisType == MOUNT_FLYING or thisType == MOUNT_BOTH) and thisSpeed >= maxSpeeds[MOUNT_FLYING] ) then
 				-- Add the mount to the list.
 				mounts[MOUNT_FLYING][spellID] = {cID=i,name=name}
 				
@@ -301,7 +309,7 @@ function StableBoy:ParseMounts(login)
 					mountsFiltered[MOUNT_FLYING][#mountsFiltered[MOUNT_FLYING]+1] = mounts[MOUNT_FLYING][spellID]
 					mounts[MOUNT_FLYING][spellID].enabled = 1
 				end
-			end
+			end -- not aqMount
 		end
 	end -- for i=1,maxMounts
 	StableBoyTooltip:Hide()
@@ -353,10 +361,16 @@ function StableBoy:ParseMounts(login)
 	self.chardb[MOUNT_FLYING] = chardb[MOUNT_FLYING]
 	menu[MOUNT_GROUND].submenu = submenus[MOUNT_GROUND]
 	menu[MOUNT_FLYING].submenu = submenus[MOUNT_FLYING]
+	-- Make sure to update our options frame.
 	self:Options_Update()
 end
 
-function StableBoy:RebuildFilteredMounts()
+function StableBoy:RebuildFilteredMounts(reParse)
+	if( reParse ) then
+		self:ParseMounts(true)
+		return
+	end
+	
 	local mountsFiltered = {
 		[MOUNT_GROUND] = {},
 		[MOUNT_FLYING] = {}
@@ -522,10 +536,30 @@ function StableBoy:OptionsFrameCreate()
 	options.UnderbellyTweak = checkbox
 	]]
 	
+	checkbox = self:CreateCheckButton(options, "StableBoyMergeFastCheckBox")
+	checkbox:SetPoint(TL, 10, -60)
+	_G[checkbox:GetName()..'Text']:SetText(L.MergeFastOption)
+	checkbox:SetChecked(self.chardb.mergeFast)
+
+	subtitle = options:CreateFontString(nil, "ARTWORK", "GameFontHighlightSmall")
+	subtitle:SetHeight(32)
+	subtitle:SetPoint(TL, checkbox, BL, 5, 0)
+	--subtitle:SetPoint(MR, options, -32, 0)
+	subtitle:SetNonSpaceWrap(true)
+	subtitle:SetJustifyH("LEFT")
+	subtitle:SetJustifyV("TOP")
+	subtitle:SetText(L.MergeFastOptionDescription)
+	checkbox.subtitle = subtitle
+	options.MergeFast = checkbox
+	
 	-- Refresh Mounts Button
-	options.refresh = self:CreateButton(options, L.Refresh, 120, 22)
-	options.refresh:SetPoint(BR, -16, 16)
-	options.refresh:SetScript('OnClick', function(self,...) StableBoy:Options_Refresh() end)
+	options.reparse = self:CreateButton(options, L.Refresh, 120, 22)
+	options.reparse:SetPoint(BL, 16, 16)
+	options.reparse:SetScript('OnClick', function(self,...) StableBoy:Options_Refresh() end)
+	-- Apply Options button
+	options.apply = self:CreateButton(options, L.Apply, 96, 22)
+	options.apply:SetPoint(BR, -16, 16)
+	options.apply:SetScript('OnClick', function(self,...) StableBoy:Options_Okay(self,...) end)
 	
 	-- Setup the ground mount panel
 	panel = CreateFrame('Frame', 'StableBoyOptionsGroundFrame', UIParent)
@@ -639,6 +673,8 @@ The user's selections should be represented by the "enabled" variable in the
 mounts[mountType] table.
 ]]--
 function StableBoy:Options_Okay(panel)
+	local reParse = self.chardb.mergeFast ~= (self.options.MergeFast:GetChecked() and true or false)
+	self.chardb.mergeFast = self.options.MergeFast:GetChecked() and true or false
 	--self.chardb.KrasusLanding = self.options.KrasusLandingTweak:GetChecked() and true or false;
 	--self.chardb.VioletCitadel = self.options.VioletCitadelTweak:GetChecked() and true or false;
 	--self.chardb.Underbelly = self.options.UnderbellyTweak:GetChecked() and true or false;
@@ -648,7 +684,7 @@ function StableBoy:Options_Okay(panel)
 			self.chardb[mountType][spellID] = info.enabled
 		end
 	end
-	self:RebuildFilteredMounts()
+	self:RebuildFilteredMounts(reParse)
 end
 
 --[[
@@ -660,6 +696,7 @@ NOTE: We should NOT have to rebuild our filtered mounts list here, because
 nothing should have changed.
 ]]--
 function StableBoy:Options_Cancel(panel,...)
+	self.options.MergeFast:SetChecked(self.chardb.mergeFast)
 	--self.options.KrasusLandingTweak:SetChecked(self.chardb.KrasusLanding)
 	--self.options.VioletCitadelTweak:SetChecked(self.chardb.VioletCitadel)
 	--self.options.UnderbellyTweak:SetChecked(self.chardb.Underbelly)
@@ -676,10 +713,14 @@ The user hit "Defaults", so we return to our default state, which is every mount
 enabled.
 ]]--
 function StableBoy:Options_Defaults(panel,...)
+	local reParse = self.chardb.mergeFast == defaults.mergeFast
+	
+	self.chardb.mergeFast = defaults.mergeFast
 	--self.chardb.KrasusLanding = defaults.KrasusLanding
 	--self.chardb.VioletCitadel = defaults.VioletCitadel
 	--self.chardb.Underbelly = defaults.Underbelly
-
+	
+	self.options.MergeFast:SetChecked(defaults.mergeFast)
 	--self.options.KrasusLandingTweak:SetChecked(defaults.KrasusLanding)
 	--self.options.VioletCitadelTweak:SetChecked(defaults.VioletCitadel)
 	--self.options.UnderbellyTweak:SetChecked(defaults.Underbelly)
@@ -688,7 +729,7 @@ function StableBoy:Options_Defaults(panel,...)
 		info.enabled = 1
 		self.chardb[mountType][spellID] = 1
 	end
-	self:RebuildFilteredMounts()
+	self:RebuildFilteredMounts(reParse)
 end
 
 function StableBoy:Options_Update(mountType,...)
