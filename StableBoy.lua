@@ -32,6 +32,7 @@ local mountBypass = {
 	[58983] = { mountType=MOUNT_GROUND, speed=SPEED_ADAPTS }, -- Big Blizzard Bear (BlizzCon 2008)
 	[48025] = { mountType=MOUNT_BOTH, speed=SPEED_ADAPTS }, -- Headless Horseman's Mount (Hallow's End Festival)
 	[60024] = { mountType=MOUNT_FLYING, speed=SPEED_FAST }, -- Violet Proto-Drake (parses as 280, but is actualy 310)
+	[75614] = { mountType=MOUNT_BOTH, speed=SPEED_ADAPTS } -- Celestial Steed
 }
 
 StableBoy = CreateFrame("frame", "StableBoyFrame", UIParent)
